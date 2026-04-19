@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LeetCode 75-Day Tracker</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: sans-serif; font-size: 13px; color: #1a1a1a; background: #fff; padding: 24px; }
+  h1 { font-size: 18px; font-weight: 500; }
+  .sub { font-size: 12px; color: #888; margin-top: 3px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+  .stat-num { font-size: 22px; font-weight: 500; text-align: right; }
+  .stat-lbl { font-size: 11px; color: #888; text-align: right; }
+  .progress-wrap { height: 6px; background: #e5e5e5; border-radius: 3px; margin-bottom: 18px; }
+  .progress-fill { height: 6px; background: #1d9e75; border-radius: 3px; transition: width 0.3s; }
+  .filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-btn { font-size: 11px; padding: 4px 12px; border-radius: 20px; border: 0.5px solid #ccc; background: transparent; color: #666; cursor: pointer; }
+  .filter-btn.active { background: #e6f1fb; color: #185fa5; border-color: #b5d4f4; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; padding: 7px 10px; font-size: 11px; font-weight: 500; color: #888; border-bottom: 0.5px solid #e0e0e0; background: #f7f7f7; }
+  td { padding: 9px 10px; border-bottom: 0.5px solid #efefef; font-size: 12px; }
+  tr.week-row { cursor: pointer; }
+  tr.week-row:hover td { background: #f9f9f9; }
+  tr.phase-row td { background: #f3f3f3; font-size: 10px; font-weight: 500; letter-spacing: 0.6px; text-transform: uppercase; color: #888; padding: 6px 10px; }
+  tr.problem-row td { background: #fff; }
+  tr.problem-row.done td { background: #f6fbf3; }
+  tr.problem-row.done .p-name { text-decoration: line-through; color: #aaa; }
+  .badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+  .badge.E { background: #eaf3de; color: #3b6d11; }
+  .badge.M { background: #faeeda; color: #854f0b; }
+  .badge.H { background: #fcebeb; color: #a32d2d; }
+  .week-done { font-size: 11px; font-weight: 500; }
+  .week-done.full { color: #3b6d11; }
+  a { color: #185fa5; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .footer { margin-top: 16px; font-size: 11px; color: #aaa; text-align: center; }
+  input[type=checkbox] { cursor: pointer; width: 14px; height: 14px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1>LeetCode 75-Day Tracker</h1>
+    <div class="sub">Neetcode 150 · 2 problems/day · Click a week to expand</div>
+  </div>
+  <div>
+    <div class="stat-num" id="stat-num">0 / 150</div>
+    <div class="stat-lbl" id="stat-lbl">problems done · 0%</div>
+  </div>
+</div>
+
+<div class="progress-wrap"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+
+<div class="filters" id="filters"></div>
+
+<table id="main-table">
+  <thead>
+    <tr><th>Week</th><th>Topic</th><th>Days</th><th>Problems</th><th>Done</th></tr>
+  </thead>
+  <tbody id="tbody"></tbody>
+</table>
+
+<div class="footer">Progress auto-saved in your browser · <a href="https://neetcode.io/practice" target="_blank">neetcode.io ↗</a></div>
+
+<script>
+const plan = [
+  { week:1, topic:"Arrays & Hashing", days:"1–7", phase:"Phase 1 — Foundations", problems:[
+    {name:"Contains Duplicate",diff:"E",link:"https://leetcode.com/problems/contains-duplicate/"},
+    {name:"Valid Anagram",diff:"E",link:"https://leetcode.com/problems/valid-anagram/"},
+    {name:"Two Sum",diff:"E",link:"https://leetcode.com/problems/two-sum/"},
+    {name:"Group Anagrams",diff:"M",link:"https://leetcode.com/problems/group-anagrams/"},
+    {name:"Top K Frequent Elements",diff:"M",link:"https://leetcode.com/problems/top-k-frequent-elements/"},
+    {name:"Product of Array Except Self",diff:"M",link:"https://leetcode.com/problems/product-of-array-except-self/"},
+    {name:"Valid Sudoku",diff:"M",link:"https://leetcode.com/problems/valid-sudoku/"},
+    {name:"Encode & Decode Strings",diff:"M",link:"https://leetcode.com/problems/encode-and-decode-strings/"},
+    {name:"Longest Consecutive Sequence",diff:"M",link:"https://leetcode.com/problems/longest-consecutive-sequence/"},
+  ]},
+  { week:2, topic:"Two Pointers & Sliding Window", days:"8–14", phase:"Phase 1 — Foundations", problems:[
+    {name:"Valid Palindrome",diff:"E",link:"https://leetcode.com/problems/valid-palindrome/"},
+    {name:"Two Sum II",diff:"M",link:"https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/"},
+    {name:"3Sum",diff:"M",link:"https://leetcode.com/problems/3sum/"},
+    {name:"Container With Most Water",diff:"M",link:"https://leetcode.com/problems/container-with-most-water/"},
+    {name:"Trapping Rain Water",diff:"H",link:"https://leetcode.com/problems/trapping-rain-water/"},
+    {name:"Best Time to Buy & Sell Stock",diff:"E",link:"https://leetcode.com/problems/best-time-to-buy-and-sell-stock/"},
+    {name:"Longest Substring Without Repeating",diff:"M",link:"https://leetcode.com/problems/longest-substring-without-repeating-characters/"},
+    {name:"Longest Repeating Char Replacement",diff:"M",link:"https://leetcode.com/problems/longest-repeating-character-replacement/"},
+    {name:"Minimum Window Substring",diff:"H",link:"https://leetcode.com/problems/minimum-window-substring/"},
+  ]},
+  { week:3, topic:"Stack & Binary Search", days:"15–21", phase:"Phase 1 — Foundations", problems:[
+    {name:"Valid Parentheses",diff:"E",link:"https://leetcode.com/problems/valid-parentheses/"},
+    {name:"Min Stack",diff:"M",link:"https://leetcode.com/problems/min-stack/"},
+    {name:"Evaluate Reverse Polish Notation",diff:"M",link:"https://leetcode.com/problems/evaluate-reverse-polish-notation/"},
+    {name:"Generate Parentheses",diff:"M",link:"https://leetcode.com/problems/generate-parentheses/"},
+    {name:"Largest Rectangle in Histogram",diff:"H",link:"https://leetcode.com/problems/largest-rectangle-in-histogram/"},
+    {name:"Binary Search",diff:"E",link:"https://leetcode.com/problems/binary-search/"},
+    {name:"Search in Rotated Sorted Array",diff:"M",link:"https://leetcode.com/problems/search-in-rotated-sorted-array/"},
+    {name:"Find Min in Rotated Sorted Array",diff:"M",link:"https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/"},
+    {name:"Koko Eating Bananas",diff:"M",link:"https://leetcode.com/problems/koko-eating-bananas/"},
+    {name:"Median of Two Sorted Arrays",diff:"H",link:"https://leetcode.com/problems/median-of-two-sorted-arrays/"},
+  ]},
+  { week:4, topic:"Linked List", days:"22–28", phase:"Phase 2 — Core DS", problems:[
+    {name:"Reverse Linked List",diff:"E",link:"https://leetcode.com/problems/reverse-linked-list/"},
+    {name:"Merge Two Sorted Lists",diff:"E",link:"https://leetcode.com/problems/merge-two-sorted-lists/"},
+    {name:"Linked List Cycle",diff:"E",link:"https://leetcode.com/problems/linked-list-cycle/"},
+    {name:"Reorder List",diff:"M",link:"https://leetcode.com/problems/reorder-list/"},
+    {name:"Remove Nth From End",diff:"M",link:"https://leetcode.com/problems/remove-nth-node-from-end-of-list/"},
+    {name:"Copy List with Random Pointer",diff:"M",link:"https://leetcode.com/problems/copy-list-with-random-pointer/"},
+    {name:"Add Two Numbers",diff:"M",link:"https://leetcode.com/problems/add-two-numbers/"},
+    {name:"Find Duplicate Number",diff:"M",link:"https://leetcode.com/problems/find-the-duplicate-number/"},
+    {name:"LRU Cache",diff:"M",link:"https://leetcode.com/problems/lru-cache/"},
+    {name:"Merge K Sorted Lists",diff:"H",link:"https://leetcode.com/problems/merge-k-sorted-lists/"},
+    {name:"Reverse Nodes in K-Group",diff:"H",link:"https://leetcode.com/problems/reverse-nodes-in-k-group/"},
+  ]},
+  { week:5, topic:"Trees (BFS / DFS)", days:"29–35", phase:"Phase 2 — Core DS", problems:[
+    {name:"Invert Binary Tree",diff:"E",link:"https://leetcode.com/problems/invert-binary-tree/"},
+    {name:"Max Depth of Binary Tree",diff:"E",link:"https://leetcode.com/problems/maximum-depth-of-binary-tree/"},
+    {name:"Same Tree",diff:"E",link:"https://leetcode.com/problems/same-tree/"},
+    {name:"Subtree of Another Tree",diff:"E",link:"https://leetcode.com/problems/subtree-of-another-tree/"},
+    {name:"Symmetric Tree",diff:"E",link:"https://leetcode.com/problems/symmetric-tree/"},
+    {name:"Count Good Nodes in Tree",diff:"M",link:"https://leetcode.com/problems/count-good-nodes-in-binary-tree/"},
+    {name:"Validate BST",diff:"M",link:"https://leetcode.com/problems/validate-binary-search-tree/"},
+    {name:"Kth Smallest in BST",diff:"M",link:"https://leetcode.com/problems/kth-smallest-element-in-a-bst/"},
+    {name:"LCA of BST",diff:"M",link:"https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree/"},
+    {name:"Level Order Traversal",diff:"M",link:"https://leetcode.com/problems/binary-tree-level-order-traversal/"},
+    {name:"Binary Tree Right Side View",diff:"M",link:"https://leetcode.com/problems/binary-tree-right-side-view/"},
+    {name:"Path Sum II",diff:"M",link:"https://leetcode.com/problems/path-sum-ii/"},
+    {name:"Binary Tree Max Path Sum",diff:"H",link:"https://leetcode.com/problems/binary-tree-maximum-path-sum/"},
+    {name:"Serialize & Deserialize Binary Tree",diff:"H",link:"https://leetcode.com/problems/serialize-and-deserialize-binary-tree/"},
+    {name:"Construct Tree from Pre+Inorder",diff:"M",link:"https://leetcode.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal/"},
+  ]},
+  { week:6, topic:"Heap & Intervals", days:"36–42", phase:"Phase 2 — Core DS", problems:[
+    {name:"Kth Largest in Stream",diff:"E",link:"https://leetcode.com/problems/kth-largest-element-in-a-stream/"},
+    {name:"Last Stone Weight",diff:"E",link:"https://leetcode.com/problems/last-stone-weight/"},
+    {name:"K Closest Points to Origin",diff:"M",link:"https://leetcode.com/problems/k-closest-points-to-origin/"},
+    {name:"Kth Largest in Array",diff:"M",link:"https://leetcode.com/problems/kth-largest-element-in-an-array/"},
+    {name:"Task Scheduler",diff:"M",link:"https://leetcode.com/problems/task-scheduler/"},
+    {name:"Find Median from Data Stream",diff:"H",link:"https://leetcode.com/problems/find-median-from-data-stream/"},
+    {name:"Meeting Rooms",diff:"E",link:"https://leetcode.com/problems/meeting-rooms/"},
+    {name:"Insert Interval",diff:"M",link:"https://leetcode.com/problems/insert-interval/"},
+    {name:"Merge Intervals",diff:"M",link:"https://leetcode.com/problems/merge-intervals/"},
+    {name:"Non-overlapping Intervals",diff:"M",link:"https://leetcode.com/problems/non-overlapping-intervals/"},
+    {name:"Meeting Rooms II",diff:"M",link:"https://leetcode.com/problems/meeting-rooms-ii/"},
+    {name:"Minimum Interval to Include Query",diff:"H",link:"https://leetcode.com/problems/minimum-interval-to-include-each-query/"},
+  ]},
+  { week:7, topic:"Graphs", days:"43–49", phase:"Phase 3 — Graphs & DP", problems:[
+    {name:"Number of Islands",diff:"M",link:"https://leetcode.com/problems/number-of-islands/"},
+    {name:"Clone Graph",diff:"M",link:"https://leetcode.com/problems/clone-graph/"},
+    {name:"Max Area of Island",diff:"M",link:"https://leetcode.com/problems/max-area-of-island/"},
+    {name:"Pacific Atlantic Water Flow",diff:"M",link:"https://leetcode.com/problems/pacific-atlantic-water-flow/"},
+    {name:"Surrounded Regions",diff:"M",link:"https://leetcode.com/problems/surrounded-regions/"},
+    {name:"Rotting Oranges",diff:"M",link:"https://leetcode.com/problems/rotting-oranges/"},
+    {name:"Walls and Gates",diff:"M",link:"https://leetcode.com/problems/walls-and-gates/"},
+    {name:"Course Schedule",diff:"M",link:"https://leetcode.com/problems/course-schedule/"},
+    {name:"Course Schedule II",diff:"M",link:"https://leetcode.com/problems/course-schedule-ii/"},
+    {name:"Redundant Connection",diff:"M",link:"https://leetcode.com/problems/redundant-connection/"},
+    {name:"Number of Connected Components",diff:"M",link:"https://leetcode.com/problems/number-of-connected-components-in-an-undirected-graph/"},
+    {name:"Word Ladder",diff:"H",link:"https://leetcode.com/problems/word-ladder/"},
+    {name:"Alien Dictionary",diff:"H",link:"https://leetcode.com/problems/alien-dictionary/"},
+  ]},
+  { week:8, topic:"Backtracking & Tries", days:"50–56", phase:"Phase 3 — Graphs & DP", problems:[
+    {name:"Subsets",diff:"M",link:"https://leetcode.com/problems/subsets/"},
+    {name:"Combination Sum",diff:"M",link:"https://leetcode.com/problems/combination-sum/"},
+    {name:"Permutations",diff:"M",link:"https://leetcode.com/problems/permutations/"},
+    {name:"Subsets II",diff:"M",link:"https://leetcode.com/problems/subsets-ii/"},
+    {name:"Combination Sum II",diff:"M",link:"https://leetcode.com/problems/combination-sum-ii/"},
+    {name:"Word Search",diff:"M",link:"https://leetcode.com/problems/word-search/"},
+    {name:"N-Queens",diff:"H",link:"https://leetcode.com/problems/n-queens/"},
+    {name:"Palindrome Partitioning",diff:"H",link:"https://leetcode.com/problems/palindrome-partitioning/"},
+    {name:"Implement Trie",diff:"E",link:"https://leetcode.com/problems/implement-trie-prefix-tree/"},
+    {name:"Add & Search Word",diff:"M",link:"https://leetcode.com/problems/design-add-and-search-words-data-structure/"},
+    {name:"Word Search II",diff:"H",link:"https://leetcode.com/problems/word-search-ii/"},
+    {name:"Letter Combinations of Phone",diff:"M",link:"https://leetcode.com/problems/letter-combinations-of-a-phone-number/"},
+    {name:"Combination Sum III",diff:"M",link:"https://leetcode.com/problems/combination-sum-iii/"},
+  ]},
+  { week:9, topic:"1D Dynamic Programming", days:"57–63", phase:"Phase 3 — Graphs & DP", problems:[
+    {name:"Climbing Stairs",diff:"E",link:"https://leetcode.com/problems/climbing-stairs/"},
+    {name:"Min Cost Climbing Stairs",diff:"E",link:"https://leetcode.com/problems/min-cost-climbing-stairs/"},
+    {name:"House Robber",diff:"M",link:"https://leetcode.com/problems/house-robber/"},
+    {name:"House Robber II",diff:"M",link:"https://leetcode.com/problems/house-robber-ii/"},
+    {name:"Longest Palindromic Substring",diff:"M",link:"https://leetcode.com/problems/longest-palindromic-substring/"},
+    {name:"Palindromic Substrings",diff:"M",link:"https://leetcode.com/problems/palindromic-substrings/"},
+    {name:"Decode Ways",diff:"M",link:"https://leetcode.com/problems/decode-ways/"},
+    {name:"Coin Change",diff:"M",link:"https://leetcode.com/problems/coin-change/"},
+    {name:"Maximum Product Subarray",diff:"M",link:"https://leetcode.com/problems/maximum-product-subarray/"},
+    {name:"Word Break",diff:"M",link:"https://leetcode.com/problems/word-break/"},
+    {name:"Longest Increasing Subsequence",diff:"M",link:"https://leetcode.com/problems/longest-increasing-subsequence/"},
+    {name:"Partition Equal Subset Sum",diff:"H",link:"https://leetcode.com/problems/partition-equal-subset-sum/"},
+  ]},
+  { week:10, topic:"2D DP & Greedy", days:"64–70", phase:"Phase 3 — Graphs & DP", problems:[
+    {name:"Unique Paths",diff:"M",link:"https://leetcode.com/problems/unique-paths/"},
+    {name:"Longest Common Subsequence",diff:"M",link:"https://leetcode.com/problems/longest-common-subsequence/"},
+    {name:"Best Time to Buy/Sell III",diff:"H",link:"https://leetcode.com/problems/best-time-to-buy-and-sell-stock-iii/"},
+    {name:"Coin Change II",diff:"M",link:"https://leetcode.com/problems/coin-change-ii/"},
+    {name:"Target Sum",diff:"M",link:"https://leetcode.com/problems/target-sum/"},
+    {name:"Interleaving String",diff:"M",link:"https://leetcode.com/problems/interleaving-string/"},
+    {name:"Edit Distance",diff:"M",link:"https://leetcode.com/problems/edit-distance/"},
+    {name:"Burst Balloons",diff:"H",link:"https://leetcode.com/problems/burst-balloons/"},
+    {name:"Jump Game",diff:"M",link:"https://leetcode.com/problems/jump-game/"},
+    {name:"Jump Game II",diff:"M",link:"https://leetcode.com/problems/jump-game-ii/"},
+    {name:"Gas Station",diff:"M",link:"https://leetcode.com/problems/gas-station/"},
+    {name:"Hand of Straights",diff:"M",link:"https://leetcode.com/problems/hand-of-straights/"},
+  ]},
+  { week:11, topic:"Bit Manipulation & Mock", days:"71–75", phase:"Phase 4 — Polish & Mock", problems:[
+    {name:"Single Number",diff:"E",link:"https://leetcode.com/problems/single-number/"},
+    {name:"Number of 1 Bits",diff:"E",link:"https://leetcode.com/problems/number-of-1-bits/"},
+    {name:"Reverse Bits",diff:"E",link:"https://leetcode.com/problems/reverse-bits/"},
+    {name:"Sum of Two Integers",diff:"M",link:"https://leetcode.com/problems/sum-of-two-integers/"},
+    {name:"Counting Bits",diff:"E",link:"https://leetcode.com/problems/counting-bits/"},
+  ]},
+];
+
+const TOTAL = plan.reduce((s,w)=>s+w.problems.length,0);
+const KEY = "lc_done";
+const EXP_KEY = "lc_expanded";
+
+let done = JSON.parse(localStorage.getItem(KEY)||"{}");
+let expanded = JSON.parse(localStorage.getItem(EXP_KEY)||"{}");
+let activeFilter = "All";
+
+function save(){ localStorage.setItem(KEY, JSON.stringify(done)); }
+function saveExp(){ localStorage.setItem(EXP_KEY, JSON.stringify(expanded)); }
+
+function doneCount(){ return Object.values(done).filter(Boolean).length; }
+
+function updateProgress(){
+  const n = doneCount();
+  const pct = Math.round(n/TOTAL*100);
+  document.getElementById("stat-num").textContent = n+" / "+TOTAL;
+  document.getElementById("stat-lbl").textContent = "problems done · "+pct+"%";
+  document.getElementById("progress-fill").style.width = pct+"%";
+}
+
+function render(){
+  const tbody = document.getElementById("tbody");
+  tbody.innerHTML = "";
+  let lastPhase = "";
+
+  plan.forEach(w => {
+    if(activeFilter !== "All" && w.phase !== activeFilter) return;
+
+    if(w.phase !== lastPhase){
+      lastPhase = w.phase;
+      const tr = document.createElement("tr");
+      tr.className = "phase-row";
+      tr.innerHTML = `<td colspan="5">${w.phase}</td>`;
+      tbody.appendChild(tr);
+    }
+
+    const wDone = w.problems.filter((_,i)=>done[`${w.week}-${i}`]).length;
+    const isOpen = expanded[w.week];
+    const tr = document.createElement("tr");
+    tr.className = "week-row";
+    tr.innerHTML = `
+      <td><b>W${w.week}</b></td>
+      <td style="font-weight:500">${w.topic}</td>
+      <td style="color:#888;white-space:nowrap">Days ${w.days}</td>
+      <td style="color:#888">${w.problems.length} problems &nbsp;${isOpen?"▲":"▼"}</td>
+      <td class="week-done${wDone===w.problems.length?" full":""}">${wDone}/${w.problems.length}</td>`;
+    tr.onclick = () => {
+      expanded[w.week] = !expanded[w.week];
+      saveExp();
+      render();
+    };
+    tbody.appendChild(tr);
+
+    if(isOpen){
+      w.problems.forEach((p,i)=>{
+        const key = `${w.week}-${i}`;
+        const isDone = !!done[key];
+        const ptr = document.createElement("tr");
+        ptr.className = "problem-row"+(isDone?" done":"");
+        ptr.innerHTML = `
+          <td style="padding-left:24px"><input type="checkbox" ${isDone?"checked":""} data-key="${key}"></td>
+          <td colspan="2" class="p-name"><a href="${p.link}" target="_blank">${p.name} ↗</a></td>
+          <td><span class="badge ${p.diff}">${p.diff==="E"?"Easy":p.diff==="M"?"Med":"Hard"}</span></td>
+          <td></td>`;
+        ptr.querySelector("input").addEventListener("change", function(e){
+          e.stopPropagation();
+          done[this.dataset.key] = this.checked;
+          save();
+          updateProgress();
+          render();
+        });
+        tbody.appendChild(ptr);
+      });
+    }
+  });
+  updateProgress();
+}
+
+function buildFilters(){
+  const phases = ["All","Phase 1 — Foundations","Phase 2 — Core DS","Phase 3 — Graphs & DP","Phase 4 — Polish & Mock"];
+  const labels = ["All","Phase 1","Phase 2","Phase 3","Phase 4"];
+  const wrap = document.getElementById("filters");
+  phases.forEach((p,i)=>{
+    const btn = document.createElement("button");
+    btn.className = "filter-btn"+(p===activeFilter?" active":"");
+    btn.textContent = labels[i];
+    btn.onclick = ()=>{
+      activeFilter = p;
+      document.querySelectorAll(".filter-btn").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      render();
+    };
+    wrap.appendChild(btn);
+  });
+}
+
+buildFilters();
+render();
+</script>
+</body>
+</html>
