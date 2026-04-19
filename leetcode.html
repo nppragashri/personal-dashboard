@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LeetCode 75-Day Tracker</title>
+<title>LeetCode Tracker</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: sans-serif; font-size: 13px; color: #1a1a1a; background: #fff; padding: 24px; }
@@ -36,23 +36,45 @@
   a:hover { text-decoration: underline; }
   .footer { margin-top: 16px; font-size: 11px; color: #aaa; text-align: center; }
   input[type=checkbox] { cursor: pointer; width: 14px; height: 14px; }
+  .sync-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; font-size: 12px; }
+  .sync-btn { font-size: 11px; padding: 5px 14px; border-radius: 20px; border: 0.5px solid #ccc; background: #f7f7f7; cursor: pointer; color: #333; }
+  .sync-btn:hover { background: #efefef; }
+  .sync-status { font-size: 11px; color: #888; }
+  .sync-status.ok { color: #3b6d11; }
+  .sync-status.err { color: #a32d2d; }
+  .user-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+  .user-tab { font-size: 12px; padding: 6px 18px; border-radius: 20px; border: 0.5px solid #ccc; cursor: pointer; background: transparent; color: #666; }
+  .user-tab.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
 </style>
 </head>
 <body>
 
 <div style="margin-bottom:16px">
-    <a href="index.html" style="font-size:12px;color:#888;text-decoration:none;">← Back to dashboard</a>
-  </div>
+  <a href="index.html" style="font-size:12px;color:#888;text-decoration:none;">← Back to dashboard</a>
+</div>
 
-  <div class="topbar">
+<div class="topbar">
   <div>
     <h1 id="page-title">LeetCode 75-Day Tracker</h1>
-    <div class="sub" id="page-sub">Neetcode 150 · 2 problems/day · Click a week to expand</div>
+    <div class="sub" id="page-sub">Neetcode 150 · 2 problems/day</div>
   </div>
   <div>
     <div class="stat-num" id="stat-num">0 / 150</div>
     <div class="stat-lbl" id="stat-lbl">problems done · 0%</div>
   </div>
+</div>
+
+<!-- User tabs -->
+<div class="user-tabs">
+  <button class="user-tab" id="tab-pragashri" onclick="switchUser('pragashri')">👩‍💻 Pragashri</button>
+  <button class="user-tab" id="tab-jay" onclick="switchUser('jay')">👨‍💻 Jay</button>
+</div>
+
+<!-- Sync bar -->
+<div class="sync-bar">
+  <button class="sync-btn" onclick="saveToCloud()">☁ Save to cloud</button>
+  <button class="sync-btn" onclick="loadFromCloud()">↻ Refresh from cloud</button>
+  <span class="sync-status" id="sync-status">Last saved: never</span>
 </div>
 
 <div class="progress-wrap"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
@@ -66,9 +88,30 @@
   <tbody id="tbody"></tbody>
 </table>
 
-<div class="footer">Progress auto-saved in your browser · <a href="https://neetcode.io/practice" target="_blank">neetcode.io ↗</a></div>
+<div class="footer">
+  Progress synced to Firebase · <a href="https://neetcode.io/practice" target="_blank">neetcode.io ↗</a>
+</div>
 
-<script>
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBF5J5ajywUS-_7K2CdOyqJY_wPzBW9oSY",
+  authDomain: "personal-dashboard-f54b1.firebaseapp.com",
+  projectId: "personal-dashboard-f54b1",
+  storageBucket: "personal-dashboard-f54b1.firebasestorage.app",
+  messagingSenderId: "600298856164",
+  appId: "1:600298856164:web:7ed5f816b60a5ff9edd6f1"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+window._db = db;
+window._firestore = { doc, setDoc, getDoc };
+
 const plan = [
   { week:1, topic:"Arrays & Hashing", days:"1–7", phase:"Phase 1 — Foundations", problems:[
     {name:"Contains Duplicate",diff:"E",link:"https://leetcode.com/problems/contains-duplicate/"},
@@ -215,23 +258,64 @@ const plan = [
   ]},
 ];
 
+window._plan = plan;
+
+// load from cloud on start
+window.addEventListener("load", () => {
+  switchUser("pragashri");
+});
+
+window.switchUser = async function(u) {
+  window._currentUser = u;
+  document.getElementById("tab-pragashri").classList.toggle("active", u === "pragashri");
+  document.getElementById("tab-jay").classList.toggle("active", u === "jay");
+  document.getElementById("page-title").textContent = `${u === "jay" ? "Jay" : "Pragashri"}'s LeetCode Tracker`;
+  document.getElementById("sync-status").textContent = "Loading from cloud...";
+  document.getElementById("sync-status").className = "sync-status";
+  await loadFromCloud();
+};
+
+window.saveToCloud = async function() {
+  const { doc, setDoc } = window._firestore;
+  const db = window._db;
+  const u = window._currentUser;
+  try {
+    document.getElementById("sync-status").textContent = "Saving...";
+    await setDoc(doc(db, "progress", u), { done: window._done });
+    const t = new Date().toLocaleTimeString();
+    document.getElementById("sync-status").textContent = `Saved at ${t}`;
+    document.getElementById("sync-status").className = "sync-status ok";
+  } catch(e) {
+    document.getElementById("sync-status").textContent = "Save failed — check connection";
+    document.getElementById("sync-status").className = "sync-status err";
+  }
+};
+
+window.loadFromCloud = async function() {
+  const { doc, getDoc } = window._firestore;
+  const db = window._db;
+  const u = window._currentUser;
+  try {
+    const snap = await getDoc(doc(db, "progress", u));
+    window._done = snap.exists() ? (snap.data().done || {}) : {};
+    const t = new Date().toLocaleTimeString();
+    document.getElementById("sync-status").textContent = `Loaded at ${t}`;
+    document.getElementById("sync-status").className = "sync-status ok";
+  } catch(e) {
+    window._done = {};
+    document.getElementById("sync-status").textContent = "Load failed — check connection";
+    document.getElementById("sync-status").className = "sync-status err";
+  }
+  render();
+};
+
 const TOTAL = plan.reduce((s,w)=>s+w.problems.length,0);
-const params = new URLSearchParams(window.location.search);
-const user = params.get("user") || "pragashri";
-const userName = user === "jay" ? "Jay" : "Pragashri";
-const KEY = `lc_done_${user}`;
-const EXP_KEY = `lc_expanded_${user}`;
-
-document.title = `${userName} — LeetCode Tracker`;
-
-let done = JSON.parse(localStorage.getItem(KEY)||"{}");
-let expanded = JSON.parse(localStorage.getItem(EXP_KEY)||"{}");
 let activeFilter = "All";
 
-function save(){ localStorage.setItem(KEY, JSON.stringify(done)); }
-function saveExp(){ localStorage.setItem(EXP_KEY, JSON.stringify(expanded)); }
+window._done = {};
+window._currentUser = "pragashri";
 
-function doneCount(){ return Object.values(done).filter(Boolean).length; }
+function doneCount(){ return Object.values(window._done).filter(Boolean).length; }
 
 function updateProgress(){
   const n = doneCount();
@@ -246,9 +330,8 @@ function render(){
   tbody.innerHTML = "";
   let lastPhase = "";
 
-  plan.forEach(w => {
+  window._plan.forEach(w => {
     if(activeFilter !== "All" && w.phase !== activeFilter) return;
-
     if(w.phase !== lastPhase){
       lastPhase = w.phase;
       const tr = document.createElement("tr");
@@ -256,8 +339,8 @@ function render(){
       tr.innerHTML = `<td colspan="5">${w.phase}</td>`;
       tbody.appendChild(tr);
     }
-
-    const wDone = w.problems.filter((_,i)=>done[`${w.week}-${i}`]).length;
+    const expanded = window._expanded || {};
+    const wDone = w.problems.filter((_,i)=>window._done[`${w.week}-${i}`]).length;
     const isOpen = expanded[w.week];
     const tr = document.createElement("tr");
     tr.className = "week-row";
@@ -268,16 +351,15 @@ function render(){
       <td style="color:#888">${w.problems.length} problems &nbsp;${isOpen?"▲":"▼"}</td>
       <td class="week-done${wDone===w.problems.length?" full":""}">${wDone}/${w.problems.length}</td>`;
     tr.onclick = () => {
-      expanded[w.week] = !expanded[w.week];
-      saveExp();
+      if(!window._expanded) window._expanded = {};
+      window._expanded[w.week] = !window._expanded[w.week];
       render();
     };
     tbody.appendChild(tr);
-
     if(isOpen){
       w.problems.forEach((p,i)=>{
         const key = `${w.week}-${i}`;
-        const isDone = !!done[key];
+        const isDone = !!window._done[key];
         const ptr = document.createElement("tr");
         ptr.className = "problem-row"+(isDone?" done":"");
         ptr.innerHTML = `
@@ -287,8 +369,7 @@ function render(){
           <td></td>`;
         ptr.querySelector("input").addEventListener("change", function(e){
           e.stopPropagation();
-          done[this.dataset.key] = this.checked;
-          save();
+          window._done[this.dataset.key] = this.checked;
           updateProgress();
           render();
         });
@@ -303,6 +384,7 @@ function buildFilters(){
   const phases = ["All","Phase 1 — Foundations","Phase 2 — Core DS","Phase 3 — Graphs & DP","Phase 4 — Polish & Mock"];
   const labels = ["All","Phase 1","Phase 2","Phase 3","Phase 4"];
   const wrap = document.getElementById("filters");
+  wrap.innerHTML = "";
   phases.forEach((p,i)=>{
     const btn = document.createElement("button");
     btn.className = "filter-btn"+(p===activeFilter?" active":"");
@@ -318,10 +400,7 @@ function buildFilters(){
 }
 
 buildFilters();
-render();
 
-document.getElementById("page-title").textContent = `${userName}'s LeetCode Tracker`;
-document.getElementById("page-sub").textContent = `Neetcode 150 · 2 problems/day · ${userName}'s personal progress`;
 </script>
 </body>
 </html>
