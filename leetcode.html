@@ -861,21 +861,32 @@ window.hideJayNudge = function() {
 
 function checkJayNudge() {
   if (window._currentUser !== "jay") return;
-  const lastActive = localStorage.getItem("jay_lastActive");
-  if (!lastActive) return; // never solved in this browser — don't assume inactivity
-  const daysSince = (Date.now() - parseInt(lastActive)) / 86400000;
 
-  let title, msg;
-  if (daysSince >= 7) {
-    title = "Jay… a whole week?? 😤";
-    msg = "Pragashri says you better open a problem RIGHT NOW. She's waiting. 💕";
-  } else if (daysSince >= 3) {
+  const lastActive = localStorage.getItem("jay_lastActive");
+  const daysSince = lastActive
+    ? (Date.now() - parseInt(lastActive)) / 86400000
+    : null;
+
+  let emoji, title, msg;
+  if (daysSince === null || daysSince < 1) {
+    emoji = "💕";
+    title = "Hey Jay! 👋";
+    msg = "Pragashri is rooting for you today. Go smash some problems! 🍓";
+  } else if (daysSince < 2) {
+    emoji = "🥰";
+    title = "Welcome back, Jay!";
+    msg = "Pragashri missed watching you grind. You've got this. ❤️";
+  } else if (daysSince < 7) {
+    emoji = "🥺";
     title = `${Math.floor(daysSince)} days without coding 😭`;
     msg = "Pragashri believes in you — get back to it, babe. You're so close. ❤️";
   } else {
-    title = "Hey Jay… it's been a couple days 👀";
-    msg = "Pragashri's rooting for you! Don't let the streak die. 🍓";
+    emoji = "😤";
+    title = "Jay… a whole week??";
+    msg = "Pragashri says you better open a problem RIGHT NOW. She's waiting. 💕";
   }
+
+  document.getElementById("jay-nudge").querySelector(".jay-nudge-emoji").textContent = emoji;
 
   document.getElementById("jay-nudge-title").textContent = title;
   document.getElementById("jay-nudge-msg").textContent = msg;
