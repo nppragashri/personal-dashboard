@@ -583,7 +583,7 @@
 <div class="main">
 
   <div class="user-tabs">
-    <button class="user-tab" id="tab-pragashri" onclick="switchUser('pragashri')">👩‍💻 Pragashri</button>
+    <button class="user-tab" id="tab-pragashri" onclick="switchUser('pragashri')">👩‍💻 Pingu</button>
     <button class="user-tab" id="tab-jay" onclick="switchUser('jay')">👨‍💻 Jay</button>
   </div>
 
@@ -871,19 +871,19 @@ function checkJayNudge() {
   if (daysSince === null || daysSince < 1) {
     emoji = "💕";
     title = "Hey Jay! 👋";
-    msg = "Pragashri is rooting for you today. Go smash some problems! 🍓";
+    msg = "Pingu is rooting for you today. Go smash some problems! 🍓";
   } else if (daysSince < 2) {
     emoji = "🥰";
     title = "Welcome back, Jay!";
-    msg = "Pragashri missed watching you grind. You've got this. ❤️";
+    msg = "Pingu missed watching you grind. You've got this. ❤️";
   } else if (daysSince < 7) {
     emoji = "🥺";
     title = `${Math.floor(daysSince)} days without coding 😭`;
-    msg = "Pragashri believes in you — get back to it, babe. You're so close. ❤️";
+    msg = "Pingu believes in you — get back to it, babe. You're so close. ❤️";
   } else {
     emoji = "😤";
     title = "Jay… a whole week??";
-    msg = "Pragashri says you better open a problem RIGHT NOW. She's waiting. 💕";
+    msg = "Pingu says you better open a problem RIGHT NOW. She's waiting. 💕";
   }
 
   document.getElementById("jay-nudge").querySelector(".jay-nudge-emoji").textContent = emoji;
@@ -1169,7 +1169,7 @@ window.switchUser = async function(u) {
   document.getElementById("tab-pragashri").classList.toggle("active", u === "pragashri");
   document.getElementById("tab-jay").classList.toggle("active", u === "jay");
   document.getElementById("page-title").textContent =
-    `${u === "jay" ? "Jay" : "Pragashri"}'s Tracker`;
+    `${u === "jay" ? "Jay" : "Pingu"}'s Tracker`;
   await loadFromCloud();
 };
 
