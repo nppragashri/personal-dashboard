@@ -5,94 +5,322 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LeetCode Tracker</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: sans-serif; font-size: 13px; color: #1a1a1a; background: #fff; padding: 24px; }
-  h1 { font-size: 18px; font-weight: 500; }
-  .sub { font-size: 12px; color: #888; margin-top: 3px; }
-  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
-  .stat-num { font-size: 22px; font-weight: 500; text-align: right; }
-  .stat-lbl { font-size: 11px; color: #888; text-align: right; }
-  .progress-wrap { height: 6px; background: #e5e5e5; border-radius: 3px; margin-bottom: 18px; }
-  .progress-fill { height: 6px; background: #1d9e75; border-radius: 3px; transition: width 0.3s; }
-  .filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-  .filter-btn { font-size: 11px; padding: 4px 12px; border-radius: 20px; border: 0.5px solid #ccc; background: transparent; color: #666; cursor: pointer; }
-  .filter-btn.active { background: #e6f1fb; color: #185fa5; border-color: #b5d4f4; }
-  table { width: 100%; border-collapse: collapse; }
-  th { text-align: left; padding: 7px 10px; font-size: 11px; font-weight: 500; color: #888; border-bottom: 0.5px solid #e0e0e0; background: #f7f7f7; }
-  td { padding: 9px 10px; border-bottom: 0.5px solid #efefef; font-size: 12px; }
-  tr.week-row { cursor: pointer; }
-  tr.week-row:hover td { background: #f9f9f9; }
-  tr.phase-row td { background: #f3f3f3; font-size: 10px; font-weight: 500; letter-spacing: 0.6px; text-transform: uppercase; color: #888; padding: 6px 10px; }
-  tr.problem-row td { background: #fff; }
-  tr.problem-row.done td { background: #f6fbf3; }
-  tr.problem-row.done .p-name { text-decoration: line-through; color: #aaa; }
-  .badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
-  .badge.E { background: #eaf3de; color: #3b6d11; }
-  .badge.M { background: #faeeda; color: #854f0b; }
-  .badge.H { background: #fcebeb; color: #a32d2d; }
-  .week-done { font-size: 11px; font-weight: 500; }
-  .week-done.full { color: #3b6d11; }
-  a { color: #185fa5; text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  .footer { margin-top: 16px; font-size: 11px; color: #aaa; text-align: center; }
-  input[type=checkbox] { cursor: pointer; width: 14px; height: 14px; }
-  .sync-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; font-size: 12px; }
-  .sync-btn { font-size: 11px; padding: 5px 14px; border-radius: 20px; border: 0.5px solid #ccc; background: #f7f7f7; cursor: pointer; color: #333; }
-  .sync-btn:hover { background: #efefef; }
-  .sync-status { font-size: 11px; color: #888; }
-  .sync-status.ok { color: #3b6d11; }
-  .sync-status.err { color: #a32d2d; }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px;
+    color: #111;
+    background: #f0f2f5;
+    min-height: 100vh;
+  }
+
+  /* ── Sticky header ── */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid #e5e7eb;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+  }
+
+  .header-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+
+  .back-link {
+    font-size: 12px; color: #9ca3af; text-decoration: none;
+    white-space: nowrap; flex-shrink: 0;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: #111; }
+
+  .header-title { font-size: 15px; font-weight: 700; letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .header-sub { font-size: 11px; color: #9ca3af; }
+
+  .header-right { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+
+  /* Streak badge */
+  .streak-badge {
+    display: flex; align-items: center; gap: 5px;
+    background: #fff7ed; color: #c2410c;
+    border: 1px solid #fed7aa;
+    border-radius: 20px; padding: 5px 12px;
+    font-size: 12px; font-weight: 600;
+    white-space: nowrap;
+  }
+
+  /* Stat block */
+  .stat-block { text-align: right; }
+  .stat-num { font-size: 20px; font-weight: 800; color: #111; line-height: 1; letter-spacing: -0.5px; }
+  .stat-sub { font-size: 10px; color: #9ca3af; margin-top: 2px; }
+
+  /* Progress ring */
+  .ring-wrap { position: relative; width: 48px; height: 48px; flex-shrink: 0; }
+  .ring-wrap svg { transform: rotate(-90deg); display: block; }
+  .ring-bg { fill: none; stroke: #e5e7eb; stroke-width: 4; }
+  .ring-fill {
+    fill: none; stroke: #2563eb; stroke-width: 4;
+    stroke-linecap: round;
+    stroke-dasharray: 119.38;
+    stroke-dashoffset: 119.38;
+    transition: stroke-dashoffset 0.5s ease, stroke 0.3s;
+  }
+  .ring-text {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; color: #111;
+  }
+
+  /* Progress bar (below header) */
+  .progress-bar-wrap { height: 3px; background: #e5e7eb; }
+  .progress-bar-fill {
+    height: 3px;
+    background: linear-gradient(90deg, #2563eb 0%, #7c3aed 100%);
+    transition: width 0.5s ease;
+    border-radius: 0 2px 2px 0;
+  }
+
+  /* ── Main ── */
+  .main { max-width: 880px; margin: 0 auto; padding: 24px 20px; }
+
+  /* User tabs */
   .user-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
-  .user-tab { font-size: 12px; padding: 6px 18px; border-radius: 20px; border: 0.5px solid #ccc; cursor: pointer; background: transparent; color: #666; }
-  .user-tab.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  .user-tab {
+    font-size: 12px; font-weight: 600;
+    padding: 7px 20px; border-radius: 24px;
+    border: 1.5px solid #e5e7eb;
+    cursor: pointer; background: #fff; color: #6b7280;
+    transition: all 0.15s;
+  }
+  .user-tab:hover { border-color: #9ca3af; color: #111; }
+  .user-tab.active { background: #111; color: #fff; border-color: #111; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+
+  /* Sync bar */
+  .sync-bar {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 20px;
+    background: #fff; border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    padding: 10px 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .sync-btn {
+    font-size: 11px; font-weight: 600;
+    padding: 5px 13px; border-radius: 8px;
+    border: 1px solid #e5e7eb; background: #f9fafb;
+    cursor: pointer; color: #374151;
+    transition: all 0.15s;
+  }
+  .sync-btn:hover { background: #f3f4f6; border-color: #d1d5db; }
+  .sync-status { font-size: 11px; color: #9ca3af; margin-left: 2px; }
+  .sync-status.ok { color: #16a34a; }
+  .sync-status.err { color: #dc2626; }
+
+  /* Phase filters */
+  .filters { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-btn {
+    font-size: 11px; font-weight: 600;
+    padding: 5px 14px; border-radius: 20px;
+    border: 1.5px solid #e5e7eb;
+    background: #fff; color: #6b7280; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .filter-btn:hover { border-color: #9ca3af; color: #111; }
+  .filter-btn.active { background: #2563eb; color: #fff; border-color: #2563eb; box-shadow: 0 2px 8px rgba(37,99,235,0.25); }
+
+  /* Table card */
+  .table-wrap {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  th {
+    text-align: left; padding: 10px 16px;
+    font-size: 10px; font-weight: 700; color: #9ca3af;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    background: #f9fafb; border-bottom: 1px solid #e5e7eb;
+  }
+
+  /* Phase separator row */
+  tr.phase-row td {
+    background: #f3f4f6;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.8px; text-transform: uppercase;
+    color: #6b7280; padding: 8px 16px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  /* Week rows */
+  tr.week-row { cursor: pointer; transition: background 0.12s; }
+  tr.week-row td { padding: 13px 16px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+  tr.week-row:hover td { background: #f9fafb; }
+  tr.week-row.complete td { background: #f0fdf4; }
+  tr.week-row.complete:hover td { background: #dcfce7; }
+
+  .week-num { font-size: 11px; font-weight: 700; color: #9ca3af; }
+  .week-topic { font-size: 13px; font-weight: 600; }
+  .week-days { font-size: 11px; color: #9ca3af; white-space: nowrap; }
+  .week-count { font-size: 11px; color: #9ca3af; display: flex; align-items: center; gap: 4px; }
+  .expand-chevron { font-size: 10px; color: #d1d5db; transition: transform 0.2s; }
+  .expand-chevron.open { transform: rotate(180deg); }
+
+  .done-pill {
+    display: inline-flex; align-items: center;
+    font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 12px;
+    background: #f3f4f6; color: #6b7280;
+    white-space: nowrap;
+  }
+  .done-pill.full { background: #dcfce7; color: #16a34a; }
+
+  /* Week mini progress bar */
+  .week-bar-wrap { height: 4px; background: #e5e7eb; border-radius: 2px; margin-top: 5px; min-width: 60px; }
+  .week-bar-fill { height: 4px; border-radius: 2px; background: #2563eb; transition: width 0.4s ease; }
+  .week-bar-fill.full { background: #16a34a; }
+
+  /* Problem rows */
+  tr.problem-row td {
+    padding: 9px 16px;
+    border-bottom: 1px solid #f9fafb;
+    background: #fafafa;
+    vertical-align: middle;
+  }
+  tr.problem-row:last-child td { border-bottom: none; }
+  tr.problem-row.done td { background: #f0fdf4; }
+  tr.problem-row.done .p-name { text-decoration: line-through; color: #9ca3af; }
+
+  .p-name { font-size: 12px; }
+  .p-link { color: #2563eb; text-decoration: none; transition: color 0.12s; }
+  .p-link:hover { color: #1d4ed8; text-decoration: underline; }
+
+  /* Difficulty badges */
+  .badge {
+    font-size: 10px; font-weight: 700;
+    padding: 2px 9px; border-radius: 8px; display: inline-block;
+  }
+  .badge.E { background: #dcfce7; color: #15803d; }
+  .badge.M { background: #fef3c7; color: #b45309; }
+  .badge.H { background: #fee2e2; color: #b91c1c; }
+
+  input[type=checkbox] {
+    cursor: pointer; width: 15px; height: 15px; accent-color: #2563eb;
+    flex-shrink: 0;
+  }
+
+  /* Footer */
+  .footer { margin-top: 20px; font-size: 11px; color: #9ca3af; text-align: center; }
+  .footer a { color: #6b7280; text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+
+  /* Toast notification */
+  .toast {
+    position: fixed; bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #111; color: #fff;
+    border-radius: 12px; padding: 12px 22px;
+    font-size: 13px; font-weight: 500;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    z-index: 9999; pointer-events: none; white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Empty state */
+  .empty-row td { padding: 40px; text-align: center; color: #9ca3af; font-size: 13px; }
+
+  @media (max-width: 600px) {
+    .header { padding: 10px 14px; gap: 8px; }
+    .header-title { font-size: 13px; }
+    .stat-num { font-size: 16px; }
+    .streak-badge { display: none !important; }
+    th:nth-child(3), td:nth-child(3) { display: none; }
+    .main { padding: 16px 12px; }
+  }
 </style>
 </head>
 <body>
 
-<div style="margin-bottom:16px">
-  <a href="index.html" style="font-size:12px;color:#888;text-decoration:none;">← Back to dashboard</a>
-</div>
+<div class="toast" id="toast"></div>
 
-<div class="topbar">
-  <div>
-    <h1 id="page-title">LeetCode 75-Day Tracker</h1>
-    <div class="sub" id="page-sub">Neetcode 150 · 2 problems/day</div>
+<!-- Sticky header -->
+<div class="header">
+  <div class="header-left">
+    <a class="back-link" href="index.html">← Dashboard</a>
+    <div>
+      <div class="header-title" id="page-title">LeetCode Tracker</div>
+      <div class="header-sub">Neetcode 150 · 2 problems/day</div>
+    </div>
   </div>
-  <div>
-    <div class="stat-num" id="stat-num">0 / 150</div>
-    <div class="stat-lbl" id="stat-lbl">problems done · 0%</div>
+  <div class="header-right">
+    <div class="streak-badge" id="streak-badge" style="display:none">
+      🔥 <span id="streak-count">0</span> week streak
+    </div>
+    <div class="stat-block">
+      <div class="stat-num" id="stat-num">0 / 150</div>
+      <div class="stat-sub" id="stat-lbl">0% complete</div>
+    </div>
+    <div class="ring-wrap">
+      <svg width="48" height="48" viewBox="0 0 48 48">
+        <circle class="ring-bg" cx="24" cy="24" r="19"/>
+        <circle class="ring-fill" id="ring-fill" cx="24" cy="24" r="19"/>
+      </svg>
+      <div class="ring-text" id="ring-pct">0%</div>
+    </div>
+  </div>
+</div>
+<div class="progress-bar-wrap">
+  <div class="progress-bar-fill" id="progress-bar-fill" style="width:0%"></div>
+</div>
+
+<!-- Main -->
+<div class="main">
+
+  <div class="user-tabs">
+    <button class="user-tab" id="tab-pragashri" onclick="switchUser('pragashri')">👩‍💻 Pragashri</button>
+    <button class="user-tab" id="tab-jay" onclick="switchUser('jay')">👨‍💻 Jay</button>
+  </div>
+
+  <div class="sync-bar">
+    <button class="sync-btn" onclick="saveToCloud()">☁ Save to cloud</button>
+    <button class="sync-btn" onclick="loadFromCloud()">↻ Refresh</button>
+    <span class="sync-status" id="sync-status">Last saved: never</span>
+  </div>
+
+  <div class="filters" id="filters"></div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Week</th>
+          <th>Topic</th>
+          <th>Days</th>
+          <th>Problems</th>
+          <th>Done</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    Progress synced to Firebase · <a href="https://neetcode.io/practice" target="_blank">neetcode.io ↗</a>
   </div>
 </div>
 
-<!-- User tabs -->
-<div class="user-tabs">
-  <button class="user-tab" id="tab-pragashri" onclick="switchUser('pragashri')">👩‍💻 Pragashri</button>
-  <button class="user-tab" id="tab-jay" onclick="switchUser('jay')">👨‍💻 Jay</button>
-</div>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 
-<!-- Sync bar -->
-<div class="sync-bar">
-  <button class="sync-btn" onclick="saveToCloud()">☁ Save to cloud</button>
-  <button class="sync-btn" onclick="loadFromCloud()">↻ Refresh from cloud</button>
-  <span class="sync-status" id="sync-status">Last saved: never</span>
-</div>
-
-<div class="progress-wrap"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
-
-<div class="filters" id="filters"></div>
-
-<table id="main-table">
-  <thead>
-    <tr><th>Week</th><th>Topic</th><th>Days</th><th>Problems</th><th>Done</th></tr>
-  </thead>
-  <tbody id="tbody"></tbody>
-</table>
-
-<div class="footer">
-  Progress synced to Firebase · <a href="https://neetcode.io/practice" target="_blank">neetcode.io ↗</a>
-</div>
-
-<!-- Firebase -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -108,7 +336,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-
 window._db = db;
 window._firestore = { doc, setDoc, getDoc };
 
@@ -260,27 +487,185 @@ const plan = [
 
 window._plan = plan;
 
-// load from cloud on start
-window.addEventListener("load", () => {
-  switchUser("pragashri");
-});
+const TOTAL = plan.reduce((s, w) => s + w.problems.length, 0);
+const CIRCUMFERENCE = 2 * Math.PI * 19; // r=19 → ~119.38
 
-window.switchUser = async function(u) {
-  window._currentUser = u;
-  document.getElementById("tab-pragashri").classList.toggle("active", u === "pragashri");
-  document.getElementById("tab-jay").classList.toggle("active", u === "jay");
-  document.getElementById("page-title").textContent = `${u === "jay" ? "Jay" : "Pragashri"}'s LeetCode Tracker`;
-  document.getElementById("sync-status").textContent = "Loading from cloud...";
-  document.getElementById("sync-status").className = "sync-status";
-  await loadFromCloud();
-};
+window._done = {};
+window._expanded = {};
+window._currentUser = "pragashri";
+let activeFilter = "All";
 
+// ── Toast ──
+let toastTimer = null;
+function showToast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 3000);
+}
+
+// ── Confetti ──
+function celebrate(type) {
+  if (typeof confetti === "undefined") return;
+  if (type === "all") {
+    confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } });
+  } else {
+    confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 }, colors: ["#2563eb","#7c3aed","#16a34a"] });
+  }
+}
+
+// ── Progress update ──
+function updateProgress() {
+  const n = Object.values(window._done).filter(Boolean).length;
+  const pct = Math.round(n / TOTAL * 100);
+
+  document.getElementById("stat-num").textContent = `${n} / ${TOTAL}`;
+  document.getElementById("stat-lbl").textContent = `${pct}% complete`;
+  document.getElementById("progress-bar-fill").style.width = pct + "%";
+  document.getElementById("ring-pct").textContent = pct + "%";
+
+  const offset = CIRCUMFERENCE - (pct / 100) * CIRCUMFERENCE;
+  const ring = document.getElementById("ring-fill");
+  ring.style.strokeDashoffset = offset;
+  ring.style.stroke = pct === 100 ? "#16a34a" : pct >= 50 ? "#7c3aed" : "#2563eb";
+
+  // Streak: consecutive fully-completed weeks from week 1
+  let streak = 0;
+  for (const w of plan) {
+    const allDone = w.problems.every((_, i) => window._done[`${w.week}-${i}`]);
+    if (allDone) streak++;
+    else break;
+  }
+  const badge = document.getElementById("streak-badge");
+  if (streak > 0) {
+    badge.style.display = "flex";
+    document.getElementById("streak-count").textContent = streak;
+  } else {
+    badge.style.display = "none";
+  }
+}
+
+// ── Render ──
+function render() {
+  const tbody = document.getElementById("tbody");
+  tbody.innerHTML = "";
+  let lastPhase = "";
+
+  const filtered = plan.filter(w => activeFilter === "All" || w.phase === activeFilter);
+
+  if (filtered.length === 0) {
+    const tr = document.createElement("tr");
+    tr.className = "empty-row";
+    tr.innerHTML = `<td colspan="5">No weeks in this phase.</td>`;
+    tbody.appendChild(tr);
+    updateProgress();
+    return;
+  }
+
+  filtered.forEach(w => {
+    // Phase header
+    if (w.phase !== lastPhase) {
+      lastPhase = w.phase;
+      const tr = document.createElement("tr");
+      tr.className = "phase-row";
+      tr.innerHTML = `<td colspan="5">${w.phase}</td>`;
+      tbody.appendChild(tr);
+    }
+
+    const isOpen = !!window._expanded[w.week];
+    const wDone = w.problems.filter((_, i) => window._done[`${w.week}-${i}`]).length;
+    const isComplete = wDone === w.problems.length;
+    const pct = Math.round(wDone / w.problems.length * 100);
+
+    // Week row
+    const tr = document.createElement("tr");
+    tr.className = "week-row" + (isComplete ? " complete" : "");
+    tr.innerHTML = `
+      <td><span class="week-num">W${w.week}</span></td>
+      <td>
+        <div class="week-topic">${w.topic}</div>
+        <div class="week-bar-wrap"><div class="week-bar-fill${isComplete?" full":""}" style="width:${pct}%"></div></div>
+      </td>
+      <td><span class="week-days">Days ${w.days}</span></td>
+      <td><span class="week-count">${w.problems.length} problems <span class="expand-chevron${isOpen?" open":""}">▼</span></span></td>
+      <td><span class="done-pill${isComplete?" full":""}">
+        ${isComplete ? "✓ Done" : `${wDone} / ${w.problems.length}`}
+      </span></td>
+    `;
+    tr.onclick = () => {
+      window._expanded[w.week] = !window._expanded[w.week];
+      render();
+    };
+    tbody.appendChild(tr);
+
+    // Problem rows
+    if (isOpen) {
+      w.problems.forEach((p, i) => {
+        const key = `${w.week}-${i}`;
+        const isDone = !!window._done[key];
+        const ptr = document.createElement("tr");
+        ptr.className = "problem-row" + (isDone ? " done" : "");
+        ptr.innerHTML = `
+          <td style="padding-left:28px"><input type="checkbox" ${isDone ? "checked" : ""} data-key="${key}"></td>
+          <td colspan="2" class="p-name"><a class="p-link" href="${p.link}" target="_blank">${p.name} ↗</a></td>
+          <td><span class="badge ${p.diff}">${p.diff==="E"?"Easy":p.diff==="M"?"Med":"Hard"}</span></td>
+          <td></td>
+        `;
+        ptr.querySelector("input").addEventListener("change", function(e) {
+          e.stopPropagation();
+          const wasWeekComplete = w.problems.every((_, idx) => window._done[`${w.week}-${idx}`]);
+          window._done[this.dataset.key] = this.checked;
+          const nowWeekComplete = w.problems.every((_, idx) => window._done[`${w.week}-${idx}`]);
+          const allComplete = Object.values(window._done).filter(Boolean).length === TOTAL;
+
+          if (!wasWeekComplete && nowWeekComplete) {
+            if (allComplete) {
+              celebrate("all");
+              showToast("🎉 You've completed all 150 problems!");
+            } else {
+              celebrate("week");
+              showToast(`🎉 Week ${w.week} complete — ${w.topic}!`);
+            }
+          }
+          updateProgress();
+          render();
+        });
+        tbody.appendChild(ptr);
+      });
+    }
+  });
+
+  updateProgress();
+}
+
+// ── Filters ──
+function buildFilters() {
+  const phases = ["All","Phase 1 — Foundations","Phase 2 — Core DS","Phase 3 — Graphs & DP","Phase 4 — Polish & Mock"];
+  const labels = ["All","Phase 1","Phase 2","Phase 3","Phase 4"];
+  const wrap = document.getElementById("filters");
+  wrap.innerHTML = "";
+  phases.forEach((p, i) => {
+    const btn = document.createElement("button");
+    btn.className = "filter-btn" + (p === activeFilter ? " active" : "");
+    btn.textContent = labels[i];
+    btn.onclick = () => {
+      activeFilter = p;
+      document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      render();
+    };
+    wrap.appendChild(btn);
+  });
+}
+
+// ── Firebase ──
 window.saveToCloud = async function() {
   const { doc, setDoc } = window._firestore;
-  const db = window._db;
   const u = window._currentUser;
   try {
-    document.getElementById("sync-status").textContent = "Saving...";
+    document.getElementById("sync-status").textContent = "Saving…";
+    document.getElementById("sync-status").className = "sync-status";
     await setDoc(doc(db, "progress", u), { done: window._done });
     const t = new Date().toLocaleTimeString();
     document.getElementById("sync-status").textContent = `Saved at ${t}`;
@@ -293,9 +678,10 @@ window.saveToCloud = async function() {
 
 window.loadFromCloud = async function() {
   const { doc, getDoc } = window._firestore;
-  const db = window._db;
   const u = window._currentUser;
   try {
+    document.getElementById("sync-status").textContent = "Loading…";
+    document.getElementById("sync-status").className = "sync-status";
     const snap = await getDoc(doc(db, "progress", u));
     window._done = snap.exists() ? (snap.data().done || {}) : {};
     const t = new Date().toLocaleTimeString();
@@ -309,98 +695,22 @@ window.loadFromCloud = async function() {
   render();
 };
 
-const TOTAL = plan.reduce((s,w)=>s+w.problems.length,0);
-let activeFilter = "All";
+window.switchUser = async function(u) {
+  window._currentUser = u;
+  window._expanded = {};
+  document.getElementById("tab-pragashri").classList.toggle("active", u === "pragashri");
+  document.getElementById("tab-jay").classList.toggle("active", u === "jay");
+  document.getElementById("page-title").textContent = `${u === "jay" ? "Jay" : "Pragashri"}'s LeetCode Tracker`;
+  await loadFromCloud();
+};
 
-window._done = {};
-window._currentUser = "pragashri";
-
-function doneCount(){ return Object.values(window._done).filter(Boolean).length; }
-
-function updateProgress(){
-  const n = doneCount();
-  const pct = Math.round(n/TOTAL*100);
-  document.getElementById("stat-num").textContent = n+" / "+TOTAL;
-  document.getElementById("stat-lbl").textContent = "problems done · "+pct+"%";
-  document.getElementById("progress-fill").style.width = pct+"%";
-}
-
-function render(){
-  const tbody = document.getElementById("tbody");
-  tbody.innerHTML = "";
-  let lastPhase = "";
-
-  window._plan.forEach(w => {
-    if(activeFilter !== "All" && w.phase !== activeFilter) return;
-    if(w.phase !== lastPhase){
-      lastPhase = w.phase;
-      const tr = document.createElement("tr");
-      tr.className = "phase-row";
-      tr.innerHTML = `<td colspan="5">${w.phase}</td>`;
-      tbody.appendChild(tr);
-    }
-    const expanded = window._expanded || {};
-    const wDone = w.problems.filter((_,i)=>window._done[`${w.week}-${i}`]).length;
-    const isOpen = expanded[w.week];
-    const tr = document.createElement("tr");
-    tr.className = "week-row";
-    tr.innerHTML = `
-      <td><b>W${w.week}</b></td>
-      <td style="font-weight:500">${w.topic}</td>
-      <td style="color:#888;white-space:nowrap">Days ${w.days}</td>
-      <td style="color:#888">${w.problems.length} problems &nbsp;${isOpen?"▲":"▼"}</td>
-      <td class="week-done${wDone===w.problems.length?" full":""}">${wDone}/${w.problems.length}</td>`;
-    tr.onclick = () => {
-      if(!window._expanded) window._expanded = {};
-      window._expanded[w.week] = !window._expanded[w.week];
-      render();
-    };
-    tbody.appendChild(tr);
-    if(isOpen){
-      w.problems.forEach((p,i)=>{
-        const key = `${w.week}-${i}`;
-        const isDone = !!window._done[key];
-        const ptr = document.createElement("tr");
-        ptr.className = "problem-row"+(isDone?" done":"");
-        ptr.innerHTML = `
-          <td style="padding-left:24px"><input type="checkbox" ${isDone?"checked":""} data-key="${key}"></td>
-          <td colspan="2" class="p-name"><a href="${p.link}" target="_blank">${p.name} ↗</a></td>
-          <td><span class="badge ${p.diff}">${p.diff==="E"?"Easy":p.diff==="M"?"Med":"Hard"}</span></td>
-          <td></td>`;
-        ptr.querySelector("input").addEventListener("change", function(e){
-          e.stopPropagation();
-          window._done[this.dataset.key] = this.checked;
-          updateProgress();
-          render();
-        });
-        tbody.appendChild(ptr);
-      });
-    }
-  });
-  updateProgress();
-}
-
-function buildFilters(){
-  const phases = ["All","Phase 1 — Foundations","Phase 2 — Core DS","Phase 3 — Graphs & DP","Phase 4 — Polish & Mock"];
-  const labels = ["All","Phase 1","Phase 2","Phase 3","Phase 4"];
-  const wrap = document.getElementById("filters");
-  wrap.innerHTML = "";
-  phases.forEach((p,i)=>{
-    const btn = document.createElement("button");
-    btn.className = "filter-btn"+(p===activeFilter?" active":"");
-    btn.textContent = labels[i];
-    btn.onclick = ()=>{
-      activeFilter = p;
-      document.querySelectorAll(".filter-btn").forEach(b=>b.classList.remove("active"));
-      btn.classList.add("active");
-      render();
-    };
-    wrap.appendChild(btn);
-  });
-}
-
-buildFilters();
-
+// ── Init ──
+window.addEventListener("load", () => {
+  buildFilters();
+  const params = new URLSearchParams(location.search);
+  const u = params.get("user") || "pragashri";
+  switchUser(u);
+});
 </script>
 </body>
 </html>
