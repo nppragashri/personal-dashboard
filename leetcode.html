@@ -890,11 +890,8 @@ function checkJayNudge() {
   }, 1200);
 }
 
-let _surpriseTimer = null;
 window.hideSurprisePopup = function() {
-  const overlay = document.getElementById("surprise-overlay");
-  overlay.classList.remove("show");
-  if (_surpriseTimer) { clearTimeout(_surpriseTimer); _surpriseTimer = null; }
+  document.getElementById("surprise-overlay").classList.remove("show");
 };
 
 function showSurprisePopup(pts) {
@@ -922,8 +919,6 @@ function showSurprisePopup(pts) {
 
   const overlay = document.getElementById("surprise-overlay");
   overlay.classList.add("show");
-  if (_surpriseTimer) clearTimeout(_surpriseTimer);
-  _surpriseTimer = setTimeout(hideSurprisePopup, 2200);
 }
 
 function checkFruitMilestone(total) {
