@@ -340,6 +340,43 @@
   .footer a { color: var(--muted); text-decoration: none; transition: color 0.15s; }
   .footer a:hover { color: var(--cyan); }
 
+  /* Fruit badge */
+  .fruit-badge {
+    display: flex; align-items: center; gap: 6px;
+    border-radius: 100px; padding: 5px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 500;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .fruit-badge.strawberry {
+    background: rgba(244,63,94,0.08);
+    border: 1px solid rgba(244,63,94,0.25);
+    color: #fb7185;
+    box-shadow: 0 0 14px rgba(244,63,94,0.08);
+  }
+  .fruit-badge.guava {
+    background: rgba(132,204,22,0.08);
+    border: 1px solid rgba(132,204,22,0.3);
+    color: #a3e635;
+    box-shadow: 0 0 14px rgba(132,204,22,0.08);
+  }
+
+  /* Floating fruit */
+  @keyframes fruitFloat {
+    0%   { opacity: 1; transform: translateY(0) scale(1.3); }
+    70%  { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-72px) scale(0.7); }
+  }
+  .fruit-float {
+    position: fixed;
+    font-size: 15px; font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    pointer-events: none; z-index: 9999;
+    animation: fruitFloat 1.1s ease-out forwards;
+    white-space: nowrap; text-shadow: 0 0 10px currentColor;
+  }
+
   /* Toast */
   .toast {
     position: fixed; bottom: 28px; left: 50%;
@@ -386,6 +423,9 @@
     </div>
   </div>
   <div class="header-right">
+    <div class="fruit-badge strawberry" id="fruit-badge">
+      🍓 <span id="fruit-count">0</span> pts
+    </div>
     <div class="streak-badge" id="streak-badge" style="display:none">
       🔥 <span id="streak-count">0</span>wk streak
     </div>
@@ -618,6 +658,53 @@ window._expanded = {};
 window._currentUser = "pragashri";
 let activeFilter = "All";
 
+// ── Fruit system ──
+const FRUIT_MAP = {
+  pragashri: { emoji: "🍓", name: "strawberry", cls: "strawberry" },
+  jay:       { emoji: "🍐", name: "guava",       cls: "guava" }
+};
+function getFruit() { return FRUIT_MAP[window._currentUser] || FRUIT_MAP.pragashri; }
+
+function calcFruits() {
+  let pts = 0;
+  plan.forEach(w => w.problems.forEach((p, i) => {
+    if (window._done[`${w.week}-${i}`])
+      pts += p.diff === "E" ? 1 : p.diff === "M" ? 2 : 3;
+  }));
+  return pts;
+}
+
+function updateFruitBadge() {
+  const f = getFruit();
+  const pts = calcFruits();
+  const badge = document.getElementById("fruit-badge");
+  badge.className = `fruit-badge ${f.cls}`;
+  badge.innerHTML = `${f.emoji} <span id="fruit-count">${pts}</span> pts`;
+}
+
+function spawnFruitFloat(x, y, pts) {
+  const f = getFruit();
+  const el = document.createElement("div");
+  el.className = "fruit-float";
+  el.style.cssText = `left:${x - 24}px;top:${y - 8}px;color:${f.cls === "strawberry" ? "#fb7185" : "#a3e635"}`;
+  el.textContent = `+${pts} ${f.emoji}`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1200);
+}
+
+const MILESTONES = [10, 25, 50, 100, 150, 200, 300];
+let _lastMilestone = 0;
+function checkFruitMilestone(total) {
+  const f = getFruit();
+  for (const m of MILESTONES) {
+    if (total >= m && _lastMilestone < m) {
+      _lastMilestone = m;
+      showToast(`${f.emoji} ${m} ${f.name} points! Keep grinding!`);
+      break;
+    }
+  }
+}
+
 // ── Toast ──
 let toastTimer = null;
 function showToast(msg) {
@@ -673,6 +760,8 @@ function updateProgress() {
   const badge = document.getElementById("streak-badge");
   badge.style.display = streak > 0 ? "flex" : "none";
   document.getElementById("streak-count").textContent = streak;
+
+  updateFruitBadge();
 }
 
 // ── Render ──
@@ -751,6 +840,13 @@ function render() {
           e.stopPropagation();
           const wasWeekDone = w.problems.every((_, idx) => window._done[`${w.week}-${idx}`]);
           window._done[this.dataset.key] = this.checked;
+
+          if (this.checked) {
+            const pts = p.diff === "E" ? 1 : p.diff === "M" ? 2 : 3;
+            const rect = this.getBoundingClientRect();
+            spawnFruitFloat(rect.left + rect.width / 2, rect.top, pts);
+            checkFruitMilestone(calcFruits());
+          }
           const nowWeekDone = w.problems.every((_, idx) => window._done[`${w.week}-${idx}`]);
           const allDone = Object.values(window._done).filter(Boolean).length === TOTAL;
 
@@ -831,6 +927,7 @@ window.loadFromCloud = async function() {
 window.switchUser = async function(u) {
   window._currentUser = u;
   window._expanded = {};
+  _lastMilestone = 0;
   document.getElementById("tab-pragashri").classList.toggle("active", u === "pragashri");
   document.getElementById("tab-jay").classList.toggle("active", u === "jay");
   document.getElementById("page-title").textContent =
