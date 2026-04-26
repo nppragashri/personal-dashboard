@@ -377,6 +377,89 @@
     white-space: nowrap; text-shadow: 0 0 10px currentColor;
   }
 
+  /* Surprise popup */
+  .surprise-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 10000;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .surprise-overlay.show { opacity: 1; pointer-events: all; }
+
+  .surprise-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    padding: 44px 56px 36px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    min-width: 300px;
+    transform: scale(0.4) rotate(-6deg);
+    opacity: 0;
+    transition: transform 0.45s cubic-bezier(0.34,1.56,0.64,1), opacity 0.2s ease;
+  }
+  .surprise-overlay.show .surprise-card {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+
+  .surprise-bg-fruit {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0.1;
+    font-size: 28px;
+    animation: bgSpin 6s linear infinite;
+  }
+  @keyframes bgSpin {
+    from { transform: rotate(0deg) scale(1); }
+    to   { transform: rotate(360deg) scale(1.1); }
+  }
+
+  .surprise-main-emoji {
+    font-size: 80px;
+    display: block;
+    margin-bottom: 14px;
+    animation: fruitWobble 0.5s ease infinite alternate;
+  }
+  @keyframes fruitWobble {
+    from { transform: rotate(-10deg) scale(1); }
+    to   { transform: rotate(10deg) scale(1.12); }
+  }
+
+  .surprise-pts {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 38px; font-weight: 700; line-height: 1;
+    margin-bottom: 10px;
+  }
+  .surprise-pts.strawberry { color: #fb7185; text-shadow: 0 0 24px rgba(251,113,133,0.6); }
+  .surprise-pts.guava      { color: #a3e635; text-shadow: 0 0 24px rgba(163,230,53,0.6); }
+
+  .surprise-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .surprise-msg {
+    font-size: 20px; font-weight: 700;
+    color: #fff; letter-spacing: -0.3px;
+  }
+
+  .surprise-dismiss {
+    margin-top: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; color: var(--muted);
+    letter-spacing: 1px;
+    animation: blinkKey 1.2s step-end infinite;
+  }
+  @keyframes blinkKey { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
+
   /* Toast */
   .toast {
     position: fixed; bottom: 28px; left: 50%;
@@ -412,6 +495,17 @@
 <body>
 
 <div class="toast" id="toast"></div>
+
+<div class="surprise-overlay" id="surprise-overlay" onclick="hideSurprisePopup()">
+  <div class="surprise-card" id="surprise-card">
+    <div id="surprise-bg-fruits"></div>
+    <span class="surprise-main-emoji" id="surprise-main-emoji">🍓</span>
+    <div class="surprise-pts strawberry" id="surprise-pts">+1 pts</div>
+    <div class="surprise-label" id="surprise-label">strawberry earned</div>
+    <div class="surprise-msg" id="surprise-msg">YUMMY!</div>
+    <div class="surprise-dismiss">[ tap to close ]</div>
+  </div>
+</div>
 
 <!-- Sticky header -->
 <div class="header">
@@ -661,7 +755,7 @@ let activeFilter = "All";
 // ── Fruit system ──
 const FRUIT_MAP = {
   pragashri: { emoji: "🍓", name: "strawberry", cls: "strawberry" },
-  jay:       { emoji: "🍐", name: "guava",       cls: "guava" }
+  jay:       { emoji: "🍈", name: "guava",       cls: "guava" }
 };
 function getFruit() { return FRUIT_MAP[window._currentUser] || FRUIT_MAP.pragashri; }
 
@@ -694,6 +788,48 @@ function spawnFruitFloat(x, y, pts) {
 
 const MILESTONES = [10, 25, 50, 100, 150, 200, 300];
 let _lastMilestone = 0;
+const SURPRISE_MSGS = [
+  "YUMMY! 😋", "FRESH PICK! 🌿", "JUICY! 💦", "SO SWEET! 😍",
+  "TASTY CODE! 🔥", "CRUNCH! 💪", "LEVEL UP! ⚡", "ON A ROLL! 🚀",
+  "KEEP IT UP! 👏", "YOU'RE COOKING! 🍳", "LEGENDARY! 🏆", "SMASHED IT! 💥"
+];
+
+let _surpriseTimer = null;
+window.hideSurprisePopup = function() {
+  const overlay = document.getElementById("surprise-overlay");
+  overlay.classList.remove("show");
+  if (_surpriseTimer) { clearTimeout(_surpriseTimer); _surpriseTimer = null; }
+};
+
+function showSurprisePopup(pts) {
+  const f = getFruit();
+  const msg = SURPRISE_MSGS[Math.floor(Math.random() * SURPRISE_MSGS.length)];
+  const ptsLabel = pts === 1 ? "1 point" : `${pts} points`;
+
+  document.getElementById("surprise-main-emoji").textContent = f.emoji;
+  document.getElementById("surprise-pts").textContent = `+${pts}`;
+  document.getElementById("surprise-pts").className = `surprise-pts ${f.cls}`;
+  document.getElementById("surprise-label").textContent = `${f.name} ${ptsLabel} earned!`;
+  document.getElementById("surprise-msg").textContent = msg;
+
+  // Scatter background fruits
+  const bg = document.getElementById("surprise-bg-fruits");
+  bg.innerHTML = "";
+  const positions = [[10,10],[80,15],[5,70],[85,75],[45,5],[20,85],[70,50],[90,40],[15,45],[55,90]];
+  positions.forEach(([l, t]) => {
+    const s = document.createElement("span");
+    s.className = "surprise-bg-fruit";
+    s.textContent = f.emoji;
+    s.style.cssText = `left:${l}%;top:${t}%;animation-delay:${Math.random()*3}s;animation-duration:${5+Math.random()*4}s`;
+    bg.appendChild(s);
+  });
+
+  const overlay = document.getElementById("surprise-overlay");
+  overlay.classList.add("show");
+  if (_surpriseTimer) clearTimeout(_surpriseTimer);
+  _surpriseTimer = setTimeout(hideSurprisePopup, 2200);
+}
+
 function checkFruitMilestone(total) {
   const f = getFruit();
   for (const m of MILESTONES) {
@@ -845,6 +981,7 @@ function render() {
             const pts = p.diff === "E" ? 1 : p.diff === "M" ? 2 : 3;
             const rect = this.getBoundingClientRect();
             spawnFruitFloat(rect.left + rect.width / 2, rect.top, pts);
+            showSurprisePopup(pts);
             checkFruitMilestone(calcFruits());
           }
           const nowWeekDone = w.problems.every((_, idx) => window._done[`${w.week}-${idx}`]);
