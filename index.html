@@ -4,194 +4,323 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
+  :root {
+    --bg: #07070f;
+    --surface: #0e0e1c;
+    --surface-2: #13132a;
+    --border: rgba(255,255,255,0.07);
+    --cyan: #22d3ee;
+    --cyan-dim: rgba(34,211,238,0.15);
+    --purple: #a78bfa;
+    --purple-dim: rgba(167,139,250,0.12);
+    --green: #34d399;
+    --text: #e2e8f0;
+    --muted: #475569;
+    --muted-2: #334155;
+  }
+
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'Space Grotesk', -apple-system, sans-serif;
     min-height: 100vh;
-    background: #f0f2f5;
+    background-color: var(--bg);
+    background-image:
+      radial-gradient(ellipse 90% 60% at 50% -10%, rgba(34,211,238,0.08) 0%, transparent 60%),
+      linear-gradient(rgba(34,211,238,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(34,211,238,0.035) 1px, transparent 1px);
+    background-size: 100% 100%, 48px 48px, 48px 48px;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 24px;
+    padding: 32px 20px;
+    color: var(--text);
+  }
+
+  /* Noise overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
   }
 
   .container {
     width: 100%;
-    max-width: 460px;
+    max-width: 620px;
+    position: relative;
+    z-index: 1;
   }
 
-  .hero {
-    text-align: center;
-    margin-bottom: 36px;
-  }
-
-  .hero-icon {
-    width: 56px; height: 56px;
-    background: #111;
-    border-radius: 16px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 26px;
-    margin: 0 auto 16px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-  }
-
-  .hero h1 {
-    font-size: 22px;
-    font-weight: 700;
-    color: #111;
-    letter-spacing: -0.3px;
-  }
-
-  .hero p {
-    font-size: 13px;
-    color: #888;
-    margin-top: 4px;
-  }
-
-  .section-label {
-    font-size: 10px;
-    font-weight: 600;
+  /* Top label */
+  .sys-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--cyan);
+    letter-spacing: 2px;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
-    color: #9ca3af;
-    margin-bottom: 10px;
-    padding-left: 2px;
+    margin-bottom: 20px;
+    padding: 6px 14px;
+    background: rgba(34,211,238,0.07);
+    border: 1px solid rgba(34,211,238,0.18);
+    border-radius: 100px;
   }
 
+  .sys-label-dot {
+    width: 6px; height: 6px;
+    background: var(--cyan);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--cyan);
+    animation: pulse 2s ease infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* Hero */
+  .hero-title {
+    font-size: 52px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -2px;
+    line-height: 1.05;
+    margin-bottom: 10px;
+  }
+
+  .hero-title .gradient {
+    background: linear-gradient(135deg, var(--cyan) 0%, var(--purple) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 52px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .hero-sub::before {
+    content: '$';
+    color: var(--cyan);
+    opacity: 0.7;
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 8px; height: 14px;
+    background: var(--cyan);
+    vertical-align: middle;
+    animation: blink 1.1s step-end infinite;
+    opacity: 0.8;
+    border-radius: 1px;
+  }
+
+  @keyframes blink { 0%, 100% { opacity: 0.8; } 50% { opacity: 0; } }
+
+  /* Cards */
   .cards {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 12px;
+    gap: 18px;
   }
 
   .card {
-    background: #fff;
-    border-radius: 14px;
-    border: 1px solid #e5e7eb;
-    padding: 20px 18px;
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 44px 32px 36px;
     text-decoration: none;
-    color: #111;
-    display: block;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-    cursor: pointer;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   }
 
-  .card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-    border-color: #d1d5db;
+  /* Diagonal corner accent */
+  .card::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 80px; height: 80px;
+    background: linear-gradient(225deg, rgba(34,211,238,0.08) 0%, transparent 60%);
+    border-radius: 0 20px 0 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
   }
 
-  .card:active { transform: translateY(0); }
-
-  .card-icon {
-    font-size: 26px;
-    margin-bottom: 10px;
-    display: block;
+  .card-p:hover {
+    transform: translateY(-6px);
+    border-color: rgba(34,211,238,0.35);
+    box-shadow:
+      0 0 0 1px rgba(34,211,238,0.08),
+      0 0 60px rgba(34,211,238,0.1),
+      0 24px 48px rgba(0,0,0,0.5);
   }
 
-  .card-title {
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 4px;
+  .card-j:hover {
+    transform: translateY(-6px);
+    border-color: rgba(167,139,250,0.35);
+    box-shadow:
+      0 0 0 1px rgba(167,139,250,0.08),
+      0 0 60px rgba(167,139,250,0.1),
+      0 24px 48px rgba(0,0,0,0.5);
   }
 
-  .card-desc {
+  .card-j::after {
+    background: linear-gradient(225deg, rgba(167,139,250,0.08) 0%, transparent 60%);
+  }
+
+  /* Glow blob */
+  .card-blob {
+    position: absolute;
+    bottom: -60px; left: -40px;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    filter: blur(50px);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+  .card-p .card-blob { background: var(--cyan); }
+  .card-j .card-blob { background: var(--purple); }
+  .card:hover .card-blob { opacity: 0.07; }
+
+  /* Avatar */
+  .card-avatar {
+    width: 72px; height: 72px;
+    border-radius: 20px;
+    font-size: 32px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 24px;
+    position: relative;
+    z-index: 1;
+    transition: transform 0.2s ease;
+  }
+  .card-p .card-avatar { background: rgba(34,211,238,0.08); border: 1px solid rgba(34,211,238,0.2); }
+  .card-j .card-avatar { background: rgba(167,139,250,0.08); border: 1px solid rgba(167,139,250,0.2); }
+  .card-p:hover .card-avatar { box-shadow: 0 0 24px rgba(34,211,238,0.25); transform: scale(1.05); }
+  .card-j:hover .card-avatar { box-shadow: 0 0 24px rgba(167,139,250,0.25); transform: scale(1.05); }
+
+  .card-name {
+    font-size: 28px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+    position: relative; z-index: 1;
+  }
+
+  .card-meta {
+    font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
-    color: #9ca3af;
-    line-height: 1.5;
+    color: var(--muted);
+    line-height: 1.8;
+    position: relative; z-index: 1;
   }
 
-  .card-wide {
-    background: #fff;
-    border-radius: 14px;
-    border: 1px solid #e5e7eb;
-    padding: 18px 20px;
-    text-decoration: none;
-    color: #111;
+  .card-cta {
+    margin-top: 28px;
     display: flex;
     align-items: center;
-    gap: 14px;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-    margin-bottom: 12px;
-  }
-
-  .card-wide:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-    border-color: #d1d5db;
-  }
-
-  .card-wide:active { transform: translateY(0); }
-
-  .card-wide-icon {
-    font-size: 26px;
-    flex-shrink: 0;
-  }
-
-  .card-wide-title {
-    font-size: 14px;
+    gap: 8px;
+    font-size: 13px;
     font-weight: 600;
-    margin-bottom: 3px;
+    position: relative; z-index: 1;
+    transition: gap 0.2s ease;
+  }
+  .card-p .card-cta { color: var(--cyan); }
+  .card-j .card-cta { color: var(--purple); }
+  .card:hover .card-cta { gap: 12px; }
+
+  /* Corner code decoration */
+  .corner-code {
+    position: absolute;
+    top: 18px; left: 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--muted-2);
+    letter-spacing: 1px;
+    pointer-events: none;
   }
 
-  .card-wide-desc {
-    font-size: 11px;
-    color: #9ca3af;
-    line-height: 1.5;
-  }
-
-  .arrow {
-    margin-left: auto;
-    font-size: 16px;
-    color: #d1d5db;
-    flex-shrink: 0;
-  }
-
+  /* Footer */
   .footer {
-    margin-top: 28px;
+    margin-top: 36px;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
-    color: #c4c8d0;
+    color: var(--muted);
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .footer::before, .footer::after {
+    content: '';
+    height: 1px;
+    width: 48px;
+    background: var(--muted-2);
+  }
+
+  @media (max-width: 520px) {
+    .hero-title { font-size: 36px; letter-spacing: -1px; }
+    .cards { grid-template-columns: 1fr; }
+    .card { padding: 36px 28px 28px; }
   }
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="hero">
-    <div class="hero-icon">🏠</div>
-    <h1>Hey there 👋</h1>
-    <p>Who are you?</p>
+
+  <div class="sys-label">
+    <span class="sys-label-dot"></span>
+    SYSTEM ONLINE
   </div>
 
-  <div class="section-label">LeetCode Trackers</div>
+  <h1 class="hero-title">
+    WHO'S<br>CODING<br><span class="gradient">TODAY?</span>
+  </h1>
+  <p class="hero-sub">select --operator [pragashri | jay]<span class="cursor"></span></p>
+
   <div class="cards">
-    <a class="card" href="leetcode.html?user=pragashri">
-      <span class="card-icon">👩‍💻</span>
-      <div class="card-title">Pragashri</div>
-      <div class="card-desc">Open your personal LeetCode tracker</div>
+    <a class="card card-p" href="leetcode.html?user=pragashri">
+      <div class="card-blob"></div>
+      <div class="corner-code">OPR_01</div>
+      <div class="card-avatar">👩‍💻</div>
+      <div class="card-name">Pragashri</div>
+      <div class="card-meta">neetcode_150.plan<br>synced · cloud</div>
+      <div class="card-cta">Launch tracker <span>→</span></div>
     </a>
-    <a class="card" href="leetcode.html?user=jay">
-      <span class="card-icon">👨‍💻</span>
-      <div class="card-title">Jay</div>
-      <div class="card-desc">Open your personal LeetCode tracker</div>
+
+    <a class="card card-j" href="leetcode.html?user=jay">
+      <div class="card-blob"></div>
+      <div class="corner-code">OPR_02</div>
+      <div class="card-avatar">👨‍💻</div>
+      <div class="card-name">Jay</div>
+      <div class="card-meta">neetcode_150.plan<br>synced · cloud</div>
+      <div class="card-cta">Launch tracker <span>→</span></div>
     </a>
   </div>
 
-  <div class="section-label" style="margin-top:20px">Other</div>
-  <a class="card-wide" href="resume.html">
-    <span class="card-wide-icon">📄</span>
-    <div>
-      <div class="card-wide-title">Pragashri's Resume</div>
-      <div class="card-wide-desc">View and print the updated 2-page resume</div>
-    </div>
-    <span class="arrow">›</span>
-  </a>
-
-  <div class="footer">Progress saved per person · synced to cloud</div>
+  <div class="footer">progress synced · firebase · no server required</div>
 </div>
 </body>
 </html>

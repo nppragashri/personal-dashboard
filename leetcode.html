@@ -4,248 +4,371 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LeetCode Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
+  :root {
+    --bg: #07070f;
+    --surface: #0e0e1c;
+    --surface-2: #13132a;
+    --surface-3: #0b0b18;
+    --border: rgba(255,255,255,0.07);
+    --border-2: rgba(255,255,255,0.04);
+    --cyan: #22d3ee;
+    --cyan-glow: rgba(34,211,238,0.2);
+    --purple: #a78bfa;
+    --purple-glow: rgba(167,139,250,0.2);
+    --green: #34d399;
+    --green-glow: rgba(52,211,153,0.15);
+    --amber: #fbbf24;
+    --red: #f87171;
+    --text: #e2e8f0;
+    --text-2: #94a3b8;
+    --muted: #475569;
+    --muted-2: #1e293b;
+  }
+
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'Space Grotesk', -apple-system, sans-serif;
     font-size: 13px;
-    color: #111;
-    background: #f0f2f5;
+    color: var(--text);
+    background-color: var(--bg);
+    background-image:
+      linear-gradient(rgba(34,211,238,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(34,211,238,0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
     min-height: 100vh;
   }
 
-  /* ── Sticky header ── */
+  /* ── STICKY HEADER ── */
   .header {
     position: sticky;
-    top: 0;
-    z-index: 100;
-    background: rgba(255,255,255,0.95);
-    backdrop-filter: blur(8px);
-    border-bottom: 1px solid #e5e7eb;
-    padding: 12px 24px;
+    top: 0; z-index: 100;
+    background: rgba(7,7,15,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 28px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
   }
 
-  .header-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+  /* left glow line on header */
+  .header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--cyan), var(--purple), transparent);
+    opacity: 0.5;
+  }
+
+  .header-left { display: flex; align-items: center; gap: 16px; min-width: 0; }
 
   .back-link {
-    font-size: 12px; color: #9ca3af; text-decoration: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--muted);
+    text-decoration: none;
     white-space: nowrap; flex-shrink: 0;
     transition: color 0.15s;
+    display: flex; align-items: center; gap: 4px;
   }
-  .back-link:hover { color: #111; }
+  .back-link:hover { color: var(--cyan); }
 
-  .header-title { font-size: 15px; font-weight: 700; letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .header-sub { font-size: 11px; color: #9ca3af; }
-
-  .header-right { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
-
-  /* Streak badge */
-  .streak-badge {
-    display: flex; align-items: center; gap: 5px;
-    background: #fff7ed; color: #c2410c;
-    border: 1px solid #fed7aa;
-    border-radius: 20px; padding: 5px 12px;
-    font-size: 12px; font-weight: 600;
+  .header-title-block {}
+  .header-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; color: var(--cyan);
+    letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 2px; opacity: 0.8;
+  }
+  .header-title {
+    font-size: 15px; font-weight: 700;
+    color: #fff; letter-spacing: -0.3px;
     white-space: nowrap;
+  }
+
+  .header-right { display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+
+  /* Streak */
+  .streak-badge {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(251,191,36,0.08);
+    border: 1px solid rgba(251,191,36,0.25);
+    border-radius: 100px; padding: 5px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 500; color: var(--amber);
+    white-space: nowrap;
+    box-shadow: 0 0 16px rgba(251,191,36,0.08);
   }
 
   /* Stat block */
   .stat-block { text-align: right; }
-  .stat-num { font-size: 20px; font-weight: 800; color: #111; line-height: 1; letter-spacing: -0.5px; }
-  .stat-sub { font-size: 10px; color: #9ca3af; margin-top: 2px; }
+  .stat-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px; font-weight: 500; color: #fff;
+    line-height: 1; letter-spacing: -1px;
+  }
+  .stat-sub { font-size: 10px; color: var(--muted); margin-top: 3px; letter-spacing: 0.3px; }
 
   /* Progress ring */
-  .ring-wrap { position: relative; width: 48px; height: 48px; flex-shrink: 0; }
+  .ring-wrap { position: relative; width: 52px; height: 52px; flex-shrink: 0; }
   .ring-wrap svg { transform: rotate(-90deg); display: block; }
-  .ring-bg { fill: none; stroke: #e5e7eb; stroke-width: 4; }
+  .ring-bg { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 4; }
   .ring-fill {
-    fill: none; stroke: #2563eb; stroke-width: 4;
+    fill: none; stroke: var(--cyan); stroke-width: 4;
     stroke-linecap: round;
     stroke-dasharray: 119.38;
     stroke-dashoffset: 119.38;
-    transition: stroke-dashoffset 0.5s ease, stroke 0.3s;
+    transition: stroke-dashoffset 0.6s cubic-bezier(0.4,0,0.2,1), stroke 0.4s;
+    filter: drop-shadow(0 0 4px var(--cyan));
   }
   .ring-text {
     position: absolute; inset: 0;
     display: flex; align-items: center; justify-content: center;
-    font-size: 10px; font-weight: 700; color: #111;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-weight: 500; color: var(--text);
   }
 
-  /* Progress bar (below header) */
-  .progress-bar-wrap { height: 3px; background: #e5e7eb; }
+  /* Progress bar */
+  .progress-bar-wrap { height: 2px; background: rgba(255,255,255,0.05); }
   .progress-bar-fill {
-    height: 3px;
-    background: linear-gradient(90deg, #2563eb 0%, #7c3aed 100%);
-    transition: width 0.5s ease;
-    border-radius: 0 2px 2px 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--cyan), var(--purple));
+    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 0 0 8px rgba(34,211,238,0.4);
   }
 
-  /* ── Main ── */
-  .main { max-width: 880px; margin: 0 auto; padding: 24px 20px; }
+  /* ── MAIN ── */
+  .main { max-width: 920px; margin: 0 auto; padding: 28px 24px; }
 
   /* User tabs */
-  .user-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+  .user-tabs { display: flex; gap: 8px; margin-bottom: 24px; }
   .user-tab {
+    font-family: 'Space Grotesk', sans-serif;
     font-size: 12px; font-weight: 600;
-    padding: 7px 20px; border-radius: 24px;
-    border: 1.5px solid #e5e7eb;
-    cursor: pointer; background: #fff; color: #6b7280;
-    transition: all 0.15s;
+    padding: 8px 22px; border-radius: 100px;
+    border: 1px solid var(--border);
+    cursor: pointer; background: var(--surface); color: var(--muted);
+    transition: all 0.18s;
   }
-  .user-tab:hover { border-color: #9ca3af; color: #111; }
-  .user-tab.active { background: #111; color: #fff; border-color: #111; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+  .user-tab:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+  .user-tab.active {
+    background: rgba(34,211,238,0.1);
+    color: var(--cyan);
+    border-color: rgba(34,211,238,0.3);
+    box-shadow: 0 0 20px rgba(34,211,238,0.1);
+  }
 
   /* Sync bar */
   .sync-bar {
-    display: flex; align-items: center; gap: 8px;
-    margin-bottom: 20px;
-    background: #fff; border-radius: 10px;
-    border: 1px solid #e5e7eb;
-    padding: 10px 14px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 16px;
   }
   .sync-btn {
-    font-size: 11px; font-weight: 600;
-    padding: 5px 13px; border-radius: 8px;
-    border: 1px solid #e5e7eb; background: #f9fafb;
-    cursor: pointer; color: #374151;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 500;
+    padding: 6px 14px; border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    cursor: pointer; color: var(--text-2);
     transition: all 0.15s;
   }
-  .sync-btn:hover { background: #f3f4f6; border-color: #d1d5db; }
-  .sync-status { font-size: 11px; color: #9ca3af; margin-left: 2px; }
-  .sync-status.ok { color: #16a34a; }
-  .sync-status.err { color: #dc2626; }
+  .sync-btn:hover {
+    background: rgba(34,211,238,0.07);
+    border-color: rgba(34,211,238,0.25);
+    color: var(--cyan);
+  }
+  .sync-status { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); margin-left: 2px; }
+  .sync-status.ok { color: var(--green); }
+  .sync-status.err { color: var(--red); }
 
-  /* Phase filters */
-  .filters { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  /* Filters */
+  .filters { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
   .filter-btn {
-    font-size: 11px; font-weight: 600;
-    padding: 5px 14px; border-radius: 20px;
-    border: 1.5px solid #e5e7eb;
-    background: #fff; color: #6b7280; cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 500;
+    padding: 5px 16px; border-radius: 100px;
+    border: 1px solid var(--border);
+    background: var(--surface); color: var(--muted); cursor: pointer;
     transition: all 0.15s;
   }
-  .filter-btn:hover { border-color: #9ca3af; color: #111; }
-  .filter-btn.active { background: #2563eb; color: #fff; border-color: #2563eb; box-shadow: 0 2px 8px rgba(37,99,235,0.25); }
+  .filter-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+  .filter-btn.active {
+    background: rgba(34,211,238,0.1);
+    color: var(--cyan);
+    border-color: rgba(34,211,238,0.3);
+    box-shadow: 0 0 16px rgba(34,211,238,0.1);
+  }
 
   /* Table card */
   .table-wrap {
-    background: #fff;
-    border-radius: 14px;
-    border: 1px solid #e5e7eb;
+    background: var(--surface);
+    border-radius: 16px;
+    border: 1px solid var(--border);
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
   }
 
   table { width: 100%; border-collapse: collapse; }
 
   th {
-    text-align: left; padding: 10px 16px;
-    font-size: 10px; font-weight: 700; color: #9ca3af;
-    text-transform: uppercase; letter-spacing: 0.6px;
-    background: #f9fafb; border-bottom: 1px solid #e5e7eb;
+    text-align: left; padding: 10px 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; font-weight: 500; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1px;
+    background: var(--surface-3);
+    border-bottom: 1px solid var(--border);
   }
 
-  /* Phase separator row */
+  /* Phase row */
   tr.phase-row td {
-    background: #f3f4f6;
-    font-size: 10px; font-weight: 700;
-    letter-spacing: 0.8px; text-transform: uppercase;
-    color: #6b7280; padding: 8px 16px;
-    border-bottom: 1px solid #e5e7eb;
+    padding: 8px 18px;
+    background: rgba(34,211,238,0.03);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .phase-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; font-weight: 500;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: var(--cyan); opacity: 0.7;
   }
 
-  /* Week rows */
+  /* Week row */
   tr.week-row { cursor: pointer; transition: background 0.12s; }
-  tr.week-row td { padding: 13px 16px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
-  tr.week-row:hover td { background: #f9fafb; }
-  tr.week-row.complete td { background: #f0fdf4; }
-  tr.week-row.complete:hover td { background: #dcfce7; }
+  tr.week-row td { padding: 14px 18px; border-bottom: 1px solid var(--border-2); vertical-align: middle; }
+  tr.week-row:hover td { background: rgba(255,255,255,0.025); }
+  tr.week-row.complete td { background: rgba(52,211,153,0.04); }
+  tr.week-row.complete:hover td { background: rgba(52,211,153,0.07); }
+  tr.week-row.complete { border-left: 2px solid var(--green); }
 
-  .week-num { font-size: 11px; font-weight: 700; color: #9ca3af; }
-  .week-topic { font-size: 13px; font-weight: 600; }
-  .week-days { font-size: 11px; color: #9ca3af; white-space: nowrap; }
-  .week-count { font-size: 11px; color: #9ca3af; display: flex; align-items: center; gap: 4px; }
-  .expand-chevron { font-size: 10px; color: #d1d5db; transition: transform 0.2s; }
+  .week-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 500;
+    color: var(--muted); letter-spacing: 0.5px;
+  }
+
+  .week-topic { font-size: 13px; font-weight: 600; color: var(--text); }
+
+  .week-bar-wrap {
+    height: 3px; background: rgba(255,255,255,0.06);
+    border-radius: 2px; margin-top: 6px; min-width: 80px;
+  }
+  .week-bar-fill {
+    height: 3px; border-radius: 2px; background: var(--cyan);
+    transition: width 0.4s ease;
+  }
+  .week-bar-fill.full { background: var(--green); box-shadow: 0 0 6px rgba(52,211,153,0.4); }
+
+  .week-days {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--muted); white-space: nowrap;
+  }
+
+  .week-count-wrap { display: flex; align-items: center; gap: 6px; }
+  .week-count { font-size: 11px; color: var(--muted); }
+  .expand-chevron { font-size: 10px; color: var(--muted); transition: transform 0.2s; display: inline-block; }
   .expand-chevron.open { transform: rotate(180deg); }
 
   .done-pill {
-    display: inline-flex; align-items: center;
-    font-size: 11px; font-weight: 700;
-    padding: 3px 10px; border-radius: 12px;
-    background: #f3f4f6; color: #6b7280;
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 500;
+    padding: 3px 12px; border-radius: 100px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--muted);
     white-space: nowrap;
   }
-  .done-pill.full { background: #dcfce7; color: #16a34a; }
+  .done-pill.full {
+    background: rgba(52,211,153,0.08);
+    border-color: rgba(52,211,153,0.25);
+    color: var(--green);
+    box-shadow: 0 0 12px rgba(52,211,153,0.1);
+  }
 
-  /* Week mini progress bar */
-  .week-bar-wrap { height: 4px; background: #e5e7eb; border-radius: 2px; margin-top: 5px; min-width: 60px; }
-  .week-bar-fill { height: 4px; border-radius: 2px; background: #2563eb; transition: width 0.4s ease; }
-  .week-bar-fill.full { background: #16a34a; }
-
-  /* Problem rows */
+  /* Problem row */
   tr.problem-row td {
-    padding: 9px 16px;
-    border-bottom: 1px solid #f9fafb;
-    background: #fafafa;
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--border-2);
+    background: var(--surface-3);
     vertical-align: middle;
   }
   tr.problem-row:last-child td { border-bottom: none; }
-  tr.problem-row.done td { background: #f0fdf4; }
-  tr.problem-row.done .p-name { text-decoration: line-through; color: #9ca3af; }
+  tr.problem-row.done td { background: rgba(52,211,153,0.03); }
+  tr.problem-row.done .p-name { text-decoration: line-through; color: var(--muted); }
 
-  .p-name { font-size: 12px; }
-  .p-link { color: #2563eb; text-decoration: none; transition: color 0.12s; }
-  .p-link:hover { color: #1d4ed8; text-decoration: underline; }
+  .p-name { font-size: 12px; color: var(--text-2); }
+  .p-link { color: var(--cyan); text-decoration: none; transition: color 0.12s, text-shadow 0.12s; }
+  .p-link:hover { color: #fff; text-shadow: 0 0 12px rgba(34,211,238,0.6); }
 
   /* Difficulty badges */
   .badge {
-    font-size: 10px; font-weight: 700;
-    padding: 2px 9px; border-radius: 8px; display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-weight: 500;
+    padding: 3px 10px; border-radius: 6px; display: inline-block;
   }
-  .badge.E { background: #dcfce7; color: #15803d; }
-  .badge.M { background: #fef3c7; color: #b45309; }
-  .badge.H { background: #fee2e2; color: #b91c1c; }
+  .badge.E { background: rgba(52,211,153,0.1); color: var(--green); border: 1px solid rgba(52,211,153,0.25); }
+  .badge.M { background: rgba(251,191,36,0.1); color: var(--amber); border: 1px solid rgba(251,191,36,0.25); }
+  .badge.H { background: rgba(248,113,113,0.1); color: var(--red); border: 1px solid rgba(248,113,113,0.25); }
 
   input[type=checkbox] {
-    cursor: pointer; width: 15px; height: 15px; accent-color: #2563eb;
-    flex-shrink: 0;
+    cursor: pointer; width: 15px; height: 15px;
+    accent-color: var(--cyan); flex-shrink: 0;
   }
 
   /* Footer */
-  .footer { margin-top: 20px; font-size: 11px; color: #9ca3af; text-align: center; }
-  .footer a { color: #6b7280; text-decoration: none; }
-  .footer a:hover { text-decoration: underline; }
+  .footer {
+    margin-top: 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--muted);
+    text-align: center;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .footer::before, .footer::after {
+    content: ''; height: 1px; width: 40px;
+    background: var(--muted-2);
+  }
+  .footer a { color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .footer a:hover { color: var(--cyan); }
 
-  /* Toast notification */
+  /* Toast */
   .toast {
     position: fixed; bottom: 28px; left: 50%;
     transform: translateX(-50%) translateY(100px);
-    background: #111; color: #fff;
+    background: var(--surface);
+    border: 1px solid rgba(34,211,238,0.25);
+    color: var(--text);
     border-radius: 12px; padding: 12px 22px;
     font-size: 13px; font-weight: 500;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow: 0 0 40px rgba(34,211,238,0.1), 0 16px 48px rgba(0,0,0,0.5);
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
     z-index: 9999; pointer-events: none; white-space: nowrap;
   }
   .toast.show { transform: translateX(-50%) translateY(0); }
 
   /* Empty state */
-  .empty-row td { padding: 40px; text-align: center; color: #9ca3af; font-size: 13px; }
+  .empty-row td {
+    padding: 48px; text-align: center;
+    color: var(--muted); font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+  }
 
-  @media (max-width: 600px) {
-    .header { padding: 10px 14px; gap: 8px; }
+  @media (max-width: 640px) {
+    .header { padding: 10px 16px; }
     .header-title { font-size: 13px; }
     .stat-num { font-size: 16px; }
     .streak-badge { display: none !important; }
     th:nth-child(3), td:nth-child(3) { display: none; }
-    .main { padding: 16px 12px; }
+    .main { padding: 20px 14px; }
   }
 </style>
 </head>
@@ -256,22 +379,22 @@
 <!-- Sticky header -->
 <div class="header">
   <div class="header-left">
-    <a class="back-link" href="index.html">← Dashboard</a>
-    <div>
+    <a class="back-link" href="index.html">← back</a>
+    <div class="header-title-block">
+      <div class="header-eyebrow">// TRACKER</div>
       <div class="header-title" id="page-title">LeetCode Tracker</div>
-      <div class="header-sub">Neetcode 150 · 2 problems/day</div>
     </div>
   </div>
   <div class="header-right">
     <div class="streak-badge" id="streak-badge" style="display:none">
-      🔥 <span id="streak-count">0</span> week streak
+      🔥 <span id="streak-count">0</span>wk streak
     </div>
     <div class="stat-block">
       <div class="stat-num" id="stat-num">0 / 150</div>
       <div class="stat-sub" id="stat-lbl">0% complete</div>
     </div>
     <div class="ring-wrap">
-      <svg width="48" height="48" viewBox="0 0 48 48">
+      <svg width="52" height="52" viewBox="0 0 48 48">
         <circle class="ring-bg" cx="24" cy="24" r="19"/>
         <circle class="ring-fill" id="ring-fill" cx="24" cy="24" r="19"/>
       </svg>
@@ -283,7 +406,7 @@
   <div class="progress-bar-fill" id="progress-bar-fill" style="width:0%"></div>
 </div>
 
-<!-- Main -->
+<!-- Main content -->
 <div class="main">
 
   <div class="user-tabs">
@@ -292,9 +415,9 @@
   </div>
 
   <div class="sync-bar">
-    <button class="sync-btn" onclick="saveToCloud()">☁ Save to cloud</button>
-    <button class="sync-btn" onclick="loadFromCloud()">↻ Refresh</button>
-    <span class="sync-status" id="sync-status">Last saved: never</span>
+    <button class="sync-btn" onclick="saveToCloud()">☁ save_to_cloud()</button>
+    <button class="sync-btn" onclick="loadFromCloud()">↻ refresh()</button>
+    <span class="sync-status" id="sync-status">awaiting sync...</span>
   </div>
 
   <div class="filters" id="filters"></div>
@@ -307,7 +430,7 @@
           <th>Topic</th>
           <th>Days</th>
           <th>Problems</th>
-          <th>Done</th>
+          <th>Status</th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
@@ -315,7 +438,7 @@
   </div>
 
   <div class="footer">
-    Progress synced to Firebase · <a href="https://neetcode.io/practice" target="_blank">neetcode.io ↗</a>
+    synced · firebase · <a href="https://neetcode.io/practice" target="_blank">neetcode.io ↗</a>
   </div>
 </div>
 
@@ -488,7 +611,7 @@ const plan = [
 window._plan = plan;
 
 const TOTAL = plan.reduce((s, w) => s + w.problems.length, 0);
-const CIRCUMFERENCE = 2 * Math.PI * 19; // r=19 → ~119.38
+const CIRCUMFERENCE = 2 * Math.PI * 19;
 
 window._done = {};
 window._expanded = {};
@@ -502,20 +625,22 @@ function showToast(msg) {
   el.textContent = msg;
   el.classList.add("show");
   if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove("show"), 3000);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 3200);
 }
 
 // ── Confetti ──
 function celebrate(type) {
   if (typeof confetti === "undefined") return;
   if (type === "all") {
-    confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } });
+    confetti({ particleCount: 250, spread: 120, origin: { y: 0.5 }, colors: ["#22d3ee","#a78bfa","#34d399","#fbbf24"] });
+    setTimeout(() => confetti({ particleCount: 150, spread: 80, origin: { x: 0.2, y: 0.6 } }), 300);
+    setTimeout(() => confetti({ particleCount: 150, spread: 80, origin: { x: 0.8, y: 0.6 } }), 600);
   } else {
-    confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 }, colors: ["#2563eb","#7c3aed","#16a34a"] });
+    confetti({ particleCount: 90, spread: 65, origin: { y: 0.65 }, colors: ["#22d3ee","#a78bfa","#34d399"] });
   }
 }
 
-// ── Progress update ──
+// ── Progress ──
 function updateProgress() {
   const n = Object.values(window._done).filter(Boolean).length;
   const pct = Math.round(n / TOTAL * 100);
@@ -528,22 +653,26 @@ function updateProgress() {
   const offset = CIRCUMFERENCE - (pct / 100) * CIRCUMFERENCE;
   const ring = document.getElementById("ring-fill");
   ring.style.strokeDashoffset = offset;
-  ring.style.stroke = pct === 100 ? "#16a34a" : pct >= 50 ? "#7c3aed" : "#2563eb";
+  if (pct === 100) {
+    ring.style.stroke = "#34d399";
+    ring.style.filter = "drop-shadow(0 0 6px #34d399)";
+  } else if (pct >= 60) {
+    ring.style.stroke = "#a78bfa";
+    ring.style.filter = "drop-shadow(0 0 4px #a78bfa)";
+  } else {
+    ring.style.stroke = "#22d3ee";
+    ring.style.filter = "drop-shadow(0 0 4px #22d3ee)";
+  }
 
   // Streak: consecutive fully-completed weeks from week 1
   let streak = 0;
   for (const w of plan) {
-    const allDone = w.problems.every((_, i) => window._done[`${w.week}-${i}`]);
-    if (allDone) streak++;
+    if (w.problems.every((_, i) => window._done[`${w.week}-${i}`])) streak++;
     else break;
   }
   const badge = document.getElementById("streak-badge");
-  if (streak > 0) {
-    badge.style.display = "flex";
-    document.getElementById("streak-count").textContent = streak;
-  } else {
-    badge.style.display = "none";
-  }
+  badge.style.display = streak > 0 ? "flex" : "none";
+  document.getElementById("streak-count").textContent = streak;
 }
 
 // ── Render ──
@@ -557,19 +686,18 @@ function render() {
   if (filtered.length === 0) {
     const tr = document.createElement("tr");
     tr.className = "empty-row";
-    tr.innerHTML = `<td colspan="5">No weeks in this phase.</td>`;
+    tr.innerHTML = `<td colspan="5">// no results found</td>`;
     tbody.appendChild(tr);
     updateProgress();
     return;
   }
 
   filtered.forEach(w => {
-    // Phase header
     if (w.phase !== lastPhase) {
       lastPhase = w.phase;
       const tr = document.createElement("tr");
       tr.className = "phase-row";
-      tr.innerHTML = `<td colspan="5">${w.phase}</td>`;
+      tr.innerHTML = `<td colspan="5"><span class="phase-label">${w.phase}</span></td>`;
       tbody.appendChild(tr);
     }
 
@@ -578,20 +706,28 @@ function render() {
     const isComplete = wDone === w.problems.length;
     const pct = Math.round(wDone / w.problems.length * 100);
 
-    // Week row
     const tr = document.createElement("tr");
     tr.className = "week-row" + (isComplete ? " complete" : "");
     tr.innerHTML = `
-      <td><span class="week-num">W${w.week}</span></td>
+      <td><span class="week-num">W${String(w.week).padStart(2,"0")}</span></td>
       <td>
         <div class="week-topic">${w.topic}</div>
-        <div class="week-bar-wrap"><div class="week-bar-fill${isComplete?" full":""}" style="width:${pct}%"></div></div>
+        <div class="week-bar-wrap">
+          <div class="week-bar-fill${isComplete?" full":""}" style="width:${pct}%"></div>
+        </div>
       </td>
-      <td><span class="week-days">Days ${w.days}</span></td>
-      <td><span class="week-count">${w.problems.length} problems <span class="expand-chevron${isOpen?" open":""}">▼</span></span></td>
-      <td><span class="done-pill${isComplete?" full":""}">
-        ${isComplete ? "✓ Done" : `${wDone} / ${w.problems.length}`}
-      </span></td>
+      <td><span class="week-days">days ${w.days}</span></td>
+      <td>
+        <div class="week-count-wrap">
+          <span class="week-count">${w.problems.length} probs</span>
+          <span class="expand-chevron${isOpen?" open":""}">▼</span>
+        </div>
+      </td>
+      <td>
+        <span class="done-pill${isComplete?" full":""}">
+          ${isComplete ? "✓ DONE" : `${wDone}/${w.problems.length}`}
+        </span>
+      </td>
     `;
     tr.onclick = () => {
       window._expanded[w.week] = !window._expanded[w.week];
@@ -599,7 +735,6 @@ function render() {
     };
     tbody.appendChild(tr);
 
-    // Problem rows
     if (isOpen) {
       w.problems.forEach((p, i) => {
         const key = `${w.week}-${i}`;
@@ -607,25 +742,25 @@ function render() {
         const ptr = document.createElement("tr");
         ptr.className = "problem-row" + (isDone ? " done" : "");
         ptr.innerHTML = `
-          <td style="padding-left:28px"><input type="checkbox" ${isDone ? "checked" : ""} data-key="${key}"></td>
+          <td style="padding-left:30px"><input type="checkbox" ${isDone?"checked":""} data-key="${key}"></td>
           <td colspan="2" class="p-name"><a class="p-link" href="${p.link}" target="_blank">${p.name} ↗</a></td>
-          <td><span class="badge ${p.diff}">${p.diff==="E"?"Easy":p.diff==="M"?"Med":"Hard"}</span></td>
+          <td><span class="badge ${p.diff}">${p.diff==="E"?"easy":p.diff==="M"?"med":"hard"}</span></td>
           <td></td>
         `;
         ptr.querySelector("input").addEventListener("change", function(e) {
           e.stopPropagation();
-          const wasWeekComplete = w.problems.every((_, idx) => window._done[`${w.week}-${idx}`]);
+          const wasWeekDone = w.problems.every((_, idx) => window._done[`${w.week}-${idx}`]);
           window._done[this.dataset.key] = this.checked;
-          const nowWeekComplete = w.problems.every((_, idx) => window._done[`${w.week}-${idx}`]);
-          const allComplete = Object.values(window._done).filter(Boolean).length === TOTAL;
+          const nowWeekDone = w.problems.every((_, idx) => window._done[`${w.week}-${idx}`]);
+          const allDone = Object.values(window._done).filter(Boolean).length === TOTAL;
 
-          if (!wasWeekComplete && nowWeekComplete) {
-            if (allComplete) {
+          if (!wasWeekDone && nowWeekDone) {
+            if (allDone) {
               celebrate("all");
-              showToast("🎉 You've completed all 150 problems!");
+              showToast("🎉 ALL 150 COMPLETE. You're a beast.");
             } else {
               celebrate("week");
-              showToast(`🎉 Week ${w.week} complete — ${w.topic}!`);
+              showToast(`✓ Week ${w.week} complete — ${w.topic}`);
             }
           }
           updateProgress();
@@ -642,7 +777,7 @@ function render() {
 // ── Filters ──
 function buildFilters() {
   const phases = ["All","Phase 1 — Foundations","Phase 2 — Core DS","Phase 3 — Graphs & DP","Phase 4 — Polish & Mock"];
-  const labels = ["All","Phase 1","Phase 2","Phase 3","Phase 4"];
+  const labels = ["all","phase_1","phase_2","phase_3","phase_4"];
   const wrap = document.getElementById("filters");
   wrap.innerHTML = "";
   phases.forEach((p, i) => {
@@ -664,14 +799,13 @@ window.saveToCloud = async function() {
   const { doc, setDoc } = window._firestore;
   const u = window._currentUser;
   try {
-    document.getElementById("sync-status").textContent = "Saving…";
+    document.getElementById("sync-status").textContent = "saving...";
     document.getElementById("sync-status").className = "sync-status";
     await setDoc(doc(db, "progress", u), { done: window._done });
-    const t = new Date().toLocaleTimeString();
-    document.getElementById("sync-status").textContent = `Saved at ${t}`;
+    document.getElementById("sync-status").textContent = `saved · ${new Date().toLocaleTimeString()}`;
     document.getElementById("sync-status").className = "sync-status ok";
   } catch(e) {
-    document.getElementById("sync-status").textContent = "Save failed — check connection";
+    document.getElementById("sync-status").textContent = "error: connection failed";
     document.getElementById("sync-status").className = "sync-status err";
   }
 };
@@ -680,16 +814,15 @@ window.loadFromCloud = async function() {
   const { doc, getDoc } = window._firestore;
   const u = window._currentUser;
   try {
-    document.getElementById("sync-status").textContent = "Loading…";
+    document.getElementById("sync-status").textContent = "loading...";
     document.getElementById("sync-status").className = "sync-status";
     const snap = await getDoc(doc(db, "progress", u));
     window._done = snap.exists() ? (snap.data().done || {}) : {};
-    const t = new Date().toLocaleTimeString();
-    document.getElementById("sync-status").textContent = `Loaded at ${t}`;
+    document.getElementById("sync-status").textContent = `synced · ${new Date().toLocaleTimeString()}`;
     document.getElementById("sync-status").className = "sync-status ok";
   } catch(e) {
     window._done = {};
-    document.getElementById("sync-status").textContent = "Load failed — check connection";
+    document.getElementById("sync-status").textContent = "error: load failed";
     document.getElementById("sync-status").className = "sync-status err";
   }
   render();
@@ -700,16 +833,15 @@ window.switchUser = async function(u) {
   window._expanded = {};
   document.getElementById("tab-pragashri").classList.toggle("active", u === "pragashri");
   document.getElementById("tab-jay").classList.toggle("active", u === "jay");
-  document.getElementById("page-title").textContent = `${u === "jay" ? "Jay" : "Pragashri"}'s LeetCode Tracker`;
+  document.getElementById("page-title").textContent =
+    `${u === "jay" ? "Jay" : "Pragashri"}'s Tracker`;
   await loadFromCloud();
 };
 
-// ── Init ──
 window.addEventListener("load", () => {
   buildFilters();
   const params = new URLSearchParams(location.search);
-  const u = params.get("user") || "pragashri";
-  switchUser(u);
+  switchUser(params.get("user") || "pragashri");
 });
 </script>
 </body>
