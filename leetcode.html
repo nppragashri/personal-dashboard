@@ -861,13 +861,9 @@ window.hideJayNudge = function() {
 
 function checkJayNudge() {
   if (window._currentUser !== "jay") return;
-  const hasProgress = Object.values(window._done).some(Boolean);
-  if (!hasProgress) return;
-
   const lastActive = localStorage.getItem("jay_lastActive");
-  const daysSince = lastActive
-    ? (Date.now() - parseInt(lastActive)) / 86400000
-    : 999;
+  if (!lastActive) return; // never solved in this browser — don't assume inactivity
+  const daysSince = (Date.now() - parseInt(lastActive)) / 86400000;
 
   let title, msg;
   if (daysSince >= 7) {
@@ -1127,6 +1123,7 @@ window.saveToCloud = async function() {
     document.getElementById("sync-status").textContent = "saving...";
     document.getElementById("sync-status").className = "sync-status";
     await setDoc(doc(db, "progress", u), { done: window._done });
+    if (u === "jay") localStorage.setItem("jay_lastActive", Date.now().toString());
     document.getElementById("sync-status").textContent = `saved · ${new Date().toLocaleTimeString()}`;
     document.getElementById("sync-status").className = "sync-status ok";
   } catch(e) {
