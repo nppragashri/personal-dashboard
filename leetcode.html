@@ -460,6 +460,36 @@
   }
   @keyframes blinkKey { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
 
+  /* Jay nudge card */
+  .jay-nudge {
+    position: fixed; bottom: 32px; left: 50%;
+    transform: translateX(-50%) translateY(160px);
+    z-index: 9998;
+    background: var(--surface);
+    border: 1px solid rgba(251,113,133,0.3);
+    border-radius: 20px;
+    padding: 22px 28px;
+    min-width: 320px; max-width: 400px;
+    box-shadow: 0 0 48px rgba(251,113,133,0.1), 0 16px 48px rgba(0,0,0,0.5);
+    transition: transform 0.5s cubic-bezier(0.34,1.3,0.64,1);
+    display: flex; gap: 16px; align-items: flex-start;
+  }
+  .jay-nudge.show { transform: translateX(-50%) translateY(0); }
+  .jay-nudge-emoji { font-size: 32px; flex-shrink: 0; line-height: 1; }
+  .jay-nudge-body { flex: 1; }
+  .jay-nudge-title {
+    font-size: 13px; font-weight: 700; color: #fb7185;
+    margin-bottom: 4px;
+  }
+  .jay-nudge-msg { font-size: 12px; color: var(--text-2); line-height: 1.5; }
+  .jay-nudge-close {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; color: var(--muted);
+    margin-top: 10px; cursor: pointer; display: inline-block;
+    transition: color 0.15s;
+  }
+  .jay-nudge-close:hover { color: #fb7185; }
+
   /* Toast */
   .toast {
     position: fixed; bottom: 28px; left: 50%;
@@ -504,6 +534,15 @@
     <div class="surprise-label" id="surprise-label">strawberry earned</div>
     <div class="surprise-msg" id="surprise-msg">YUMMY!</div>
     <div class="surprise-dismiss">[ tap to close ]</div>
+  </div>
+</div>
+
+<div class="jay-nudge" id="jay-nudge">
+  <div class="jay-nudge-emoji">🥺</div>
+  <div class="jay-nudge-body">
+    <div class="jay-nudge-title" id="jay-nudge-title">Hey Jay…</div>
+    <div class="jay-nudge-msg" id="jay-nudge-msg"></div>
+    <span class="jay-nudge-close" onclick="hideJayNudge()">[ got it, let's go ]</span>
   </div>
 </div>
 
@@ -794,6 +833,63 @@ const SURPRISE_MSGS = [
   "KEEP IT UP! 👏", "YOU'RE COOKING! 🍳", "LEGENDARY! 🏆", "SMASHED IT! 💥"
 ];
 
+// Jay-only love notes — mixed in ~35% of the time
+const JAY_LOVE_NOTES = [
+  "Proud of you 🥹",
+  "You've got this, babe ❤️",
+  "I knew you could do it 💕",
+  "My favourite coder 🥰",
+  "You're amazing, Jay ✨",
+  "One step closer 💪❤️",
+  "Look at you go 😍",
+  "I'm rooting for you always 🌸"
+];
+
+function pickSurpriseMsg() {
+  if (window._currentUser === "jay" && Math.random() < 0.35) {
+    return JAY_LOVE_NOTES[Math.floor(Math.random() * JAY_LOVE_NOTES.length)];
+  }
+  return SURPRISE_MSGS[Math.floor(Math.random() * SURPRISE_MSGS.length)];
+}
+
+// ── Jay nudge (idea 2) ──
+let _nudgeTimer = null;
+window.hideJayNudge = function() {
+  document.getElementById("jay-nudge").classList.remove("show");
+  if (_nudgeTimer) { clearTimeout(_nudgeTimer); _nudgeTimer = null; }
+};
+
+function checkJayNudge() {
+  if (window._currentUser !== "jay") return;
+  const hasProgress = Object.values(window._done).some(Boolean);
+  if (!hasProgress) return;
+
+  const lastActive = localStorage.getItem("jay_lastActive");
+  const daysSince = lastActive
+    ? (Date.now() - parseInt(lastActive)) / 86400000
+    : 999;
+
+  let title, msg;
+  if (daysSince >= 7) {
+    title = "Jay… a whole week?? 😤";
+    msg = "Pragashri says you better open a problem RIGHT NOW. She's waiting. 💕";
+  } else if (daysSince >= 3) {
+    title = `${Math.floor(daysSince)} days without coding 😭`;
+    msg = "Pragashri believes in you — get back to it, babe. You're so close. ❤️";
+  } else {
+    title = "Hey Jay… it's been a couple days 👀";
+    msg = "Pragashri's rooting for you! Don't let the streak die. 🍓";
+  }
+
+  document.getElementById("jay-nudge-title").textContent = title;
+  document.getElementById("jay-nudge-msg").textContent = msg;
+
+  setTimeout(() => {
+    document.getElementById("jay-nudge").classList.add("show");
+    _nudgeTimer = setTimeout(hideJayNudge, 8000);
+  }, 1200);
+}
+
 let _surpriseTimer = null;
 window.hideSurprisePopup = function() {
   const overlay = document.getElementById("surprise-overlay");
@@ -803,7 +899,7 @@ window.hideSurprisePopup = function() {
 
 function showSurprisePopup(pts) {
   const f = getFruit();
-  const msg = SURPRISE_MSGS[Math.floor(Math.random() * SURPRISE_MSGS.length)];
+  const msg = pickSurpriseMsg();
   const ptsLabel = pts === 1 ? "1 point" : `${pts} points`;
 
   document.getElementById("surprise-main-emoji").textContent = f.emoji;
@@ -983,6 +1079,7 @@ function render() {
             spawnFruitFloat(rect.left + rect.width / 2, rect.top, pts);
             showSurprisePopup(pts);
             checkFruitMilestone(calcFruits());
+            if (window._currentUser === "jay") localStorage.setItem("jay_lastActive", Date.now().toString());
           }
           const nowWeekDone = w.problems.every((_, idx) => window._done[`${w.week}-${idx}`]);
           const allDone = Object.values(window._done).filter(Boolean).length === TOTAL;
@@ -1059,6 +1156,7 @@ window.loadFromCloud = async function() {
     document.getElementById("sync-status").className = "sync-status err";
   }
   render();
+  checkJayNudge();
 };
 
 window.switchUser = async function(u) {
