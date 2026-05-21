@@ -1128,7 +1128,7 @@ window.saveToCloud = async function() {
     document.getElementById("sync-status").textContent = `saved · ${new Date().toLocaleTimeString()}`;
     document.getElementById("sync-status").className = "sync-status ok";
   } catch(e) {
-    document.getElementById("sync-status").textContent = "error: connection failed";
+    document.getElementById("sync-status").textContent = "error: " + (e.message || JSON.stringify(e));
     document.getElementById("sync-status").className = "sync-status err";
   }
 };
