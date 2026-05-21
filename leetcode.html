@@ -611,29 +611,19 @@
   </div>
 
   <div class="footer">
-    synced · firebase · <a href="https://neetcode.io/practice" target="_blank">neetcode.io ↗</a>
+    synced · supabase · <a href="https://neetcode.io/practice" target="_blank">neetcode.io ↗</a>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBF5J5ajywUS-_7K2CdOyqJY_wPzBW9oSY",
-  authDomain: "personal-dashboard-f54b1.firebaseapp.com",
-  projectId: "personal-dashboard-f54b1",
-  storageBucket: "personal-dashboard-f54b1.firebasestorage.app",
-  messagingSenderId: "600298856164",
-  appId: "1:600298856164:web:7ed5f816b60a5ff9edd6f1"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-window._db = db;
-window._firestore = { doc, setDoc, getDoc };
+const supabase = createClient(
+  "https://jxdrnoofiheeeafaruij.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4ZHJub29maWhlZWVhZmFydWlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNjU4NTcsImV4cCI6MjA5NDk0MTg1N30.4YHVQLsaSHMk8l45ua0WWPDxSRX2cDR7w-FjmuJkCQo"
+);
 
 const plan = [
   { week:1, topic:"Arrays & Hashing", days:"1–7", phase:"Phase 1 — Foundations", problems:[
@@ -1126,14 +1116,14 @@ function buildFilters() {
   });
 }
 
-// ── Firebase ──
+// ── Supabase ──
 window.saveToCloud = async function() {
-  const { doc, setDoc } = window._firestore;
   const u = window._currentUser;
   try {
     document.getElementById("sync-status").textContent = "saving...";
     document.getElementById("sync-status").className = "sync-status";
-    await setDoc(doc(db, "progress", u), { done: window._done });
+    const { error } = await supabase.from("progress").upsert({ user_id: u, done: window._done });
+    if (error) throw error;
     if (u === "jay") localStorage.setItem("jay_lastActive", Date.now().toString());
     document.getElementById("sync-status").textContent = `saved · ${new Date().toLocaleTimeString()}`;
     document.getElementById("sync-status").className = "sync-status ok";
@@ -1144,13 +1134,13 @@ window.saveToCloud = async function() {
 };
 
 window.loadFromCloud = async function() {
-  const { doc, getDoc } = window._firestore;
   const u = window._currentUser;
   try {
     document.getElementById("sync-status").textContent = "loading...";
     document.getElementById("sync-status").className = "sync-status";
-    const snap = await getDoc(doc(db, "progress", u));
-    window._done = snap.exists() ? (snap.data().done || {}) : {};
+    const { data, error } = await supabase.from("progress").select("done").eq("user_id", u).single();
+    if (error && error.code !== "PGRST116") throw error;
+    window._done = (data && data.done) ? data.done : {};
     document.getElementById("sync-status").textContent = `synced · ${new Date().toLocaleTimeString()}`;
     document.getElementById("sync-status").className = "sync-status ok";
   } catch(e) {
